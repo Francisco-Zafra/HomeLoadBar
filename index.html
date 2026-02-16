@@ -2,225 +2,188 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>¡Cuenta Atrás para Nuestro Nuevo Piso!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrega del mejor piso del mundo</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         :root {
-            --primary-color: #4CAF50; /* Verde inicial */
-            --secondary-color: #8BC34A; /* Verde claro final */
-            --bg-dark: #1a202c;
-            --text-light: #e2e8f0;
-            --progress-track: #2d3748;
+            --primary: #4CAF50;
+            --secondary: #8bc34a;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --water: rgba(76, 175, 80, 0.3);
         }
 
-        body {
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
             font-family: 'Montserrat', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0a0e14 100%);
-            background-size: 400% 400%;
-            animation: gradientAnimation 15s ease infinite;
-            color: var(--text-light);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .container {
-            width: 90%;
-            max-width: 700px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 25px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: fadeIn 1.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h1 {
-            font-size: 2.8rem;
-            margin-bottom: 25px;
-            color: var(--text-light);
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-            font-weight: 700;
-        }
-
-        .house-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            text-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
-            animation: bounce 2s infinite ease-in-out;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-
-        #percentage {
-            font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--text-light);
-            text-shadow: 0 0 10px var(--primary-color);
-            animation: textPulse 3s infinite ease-in-out;
-        }
-
-        @keyframes textPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-        }
-
-        .progress-bg {
-            background: var(--progress-track);
-            border-radius: 30px;
-            height: 40px;
-            width: 100%;
+            background-color: var(--bg);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
             overflow: hidden;
-            margin-top: 30px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
-            position: relative;
         }
 
-        .progress-fill {
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            height: 100%;
-            width: 0%;
-            transition: width 1s ease-in-out;
-            border-radius: 30px;
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
+        /* --- EFECTO AGUA MEJORADO --- */
+        .water-container {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            animation: shine 2s infinite linear;
-            opacity: 0.7;
-            border-radius: 30px;
+            bottom: 0; left: 0; width: 100%; height: 0%;
+            background: linear-gradient(180deg, var(--water) 0%, rgba(15, 23, 42, 0.8) 100%);
+            z-index: 1;
         }
 
-        @keyframes shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .waves {
+            position: absolute;
+            top: -100px; left: 0; width: 100%; height: 100px;
         }
 
-        .dates {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-            font-size: 1.1rem;
-            color: #a0aec0;
-            font-weight: 300;
+        .editorial {
+            display: block; width: 100%; height: 100px; margin: 0;
         }
 
-        .countdown {
-            margin-top: 30px;
-            font-size: 1.5rem;
-            font-weight: 400;
-            color: var(--primary-color);
-            text-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
-            animation: fadeIn 2s ease-out;
+        .parallax > use {
+            animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+        }
+        .parallax > use:nth-child(1) { animation-delay: -2s; animation-duration: 7s; fill: rgba(76, 175, 80, 0.7); }
+        .parallax > use:nth-child(2) { animation-delay: -3s; animation-duration: 10s; fill: rgba(76, 175, 80, 0.5); }
+        .parallax > use:nth-child(3) { animation-delay: -4s; animation-duration: 13s; fill: rgba(76, 175, 80, 0.3); }
+        .parallax > use:nth-child(4) { animation-delay: -5s; animation-duration: 20s; fill: var(--water); }
+
+        @keyframes move-forever {
+            0% { transform: translate3d(-90px,0,0); }
+            100% { transform: translate3d(85px,0,0); }
         }
 
-        .countdown span {
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 0 5px;
-            display: inline-block;
-            min-width: 40px; /* Para mantener la alineación */
+        /* --- CARD --- */
+        .card {
+            position: relative; z-index: 10;
+            width: 85%; max-width: 550px;
+            padding: 50px;
+            background: var(--glass);
+            border-radius: 40px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
+
+        .icon-box {
+            font-size: 4.5rem; color: var(--primary);
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px var(--primary));
+        }
+
+        h1 { font-size: 1.6rem; font-weight: 300; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
+
+        .percentage-container {
+            font-size: 5.5rem; font-weight: 700;
+            margin: 15px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-rail {
+            background: rgba(255,255,255,0.1);
+            height: 8px; border-radius: 10px; margin: 30px 0; overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .countdown-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 30px;
+        }
+
+        .time-box span { display: block; }
+        .t-num { font-size: 1.8rem; font-weight: 700; }
+        .t-lab { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-top: 5px; }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="house-icon">&#127969;</div> <h1>¡Esperando Nuestro Nuevo Hogar!</h1>
-        <div id="percentage">0.00%</div>
-        <div class="progress-bg">
-            <div class="progress-fill" id="fill"></div>
+    <div class="water-container" id="water">
+        <div class="waves">
+            <svg class="editorial" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 24 150 28" preserveAspectRatio="none">
+                <defs>
+                    <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+                </defs>
+                <g class="parallax">
+                    <use xlink:href="#gentle-wave" x="48" y="0" />
+                    <use xlink:href="#gentle-wave" x="48" y="3" />
+                    <use xlink:href="#gentle-wave" x="48" y="5" />
+                    <use xlink:href="#gentle-wave" x="48" y="7" />
+                </g>
+            </svg>
         </div>
-        <div class="dates">
-            <span id="startDate">Noviembre 2025</span>
-            <span id="endDate">Junio 2028</span>
+    </div>
+
+    <div class="card">
+        <div class="icon-box"><i class="fa-solid fa-house-chimney-window"></i></div>
+        <h1>Entrega del mejor piso del mundo</h1>
+        <div class="percentage-container"><span id="pct-val">0</span>%</div>
+        
+        <div class="progress-rail">
+            <div class="progress-bar" id="bar"></div>
         </div>
-        <div class="countdown" id="countdown">
-            Faltan: <span id="days">0</span> días, <span id="hours">0</span> horas, <span id="minutes">0</span> minutos, <span id="seconds">0</span> segundos
+
+        <div class="countdown-grid">
+            <div class="time-box"><span class="t-num" id="d">0</span><span class="t-lab">Días</span></div>
+            <div class="time-box"><span class="t-num" id="h">0</span><span class="t-lab">Hrs</span></div>
+            <div class="time-box"><span class="t-num" id="m">0</span><span class="t-lab">Min</span></div>
+            <div class="time-box"><span class="t-num" id="s">0</span><span class="t-lab">Seg</span></div>
         </div>
     </div>
 
     <script>
-        const startDate = new Date('2025-11-01T00:00:00').getTime();
-        const endDate = new Date('2028-06-01T00:00:00').getTime();
-        const totalDuration = endDate - startDate;
+        const start = new Date('2025-11-01T00:00:00').getTime();
+        const end = new Date('2028-06-01T00:00:00').getTime();
 
-        function updateProgress() {
+        function update() {
             const now = Date.now();
+            const total = end - start;
+            const current = now - start;
+            let prog = Math.max(0, Math.min(100, (current / total) * 100));
 
-            // Calcular porcentaje
-            let progress = ((now - startDate) / totalDuration) * 100;
-            progress = Math.max(0, Math.min(100, progress)); // Limitar entre 0 y 100
+            // Animación suave con GSAP
+            gsap.to("#bar", { width: prog + "%", duration: 2, ease: "power2.out" });
+            gsap.to("#water", { height: prog + "%", duration: 3, ease: "sine.inOut" });
+            
+            // Animación del número
+            let obj = { val: parseFloat(document.getElementById('pct-val').innerText) };
+            gsap.to(obj, {
+                val: prog,
+                duration: 2,
+                onUpdate: () => {
+                    document.getElementById('pct-val').innerText = obj.val.toFixed(2);
+                }
+            });
 
-            document.getElementById('fill').style.width = progress.toFixed(2) + '%';
-            document.getElementById('percentage').innerText = progress.toFixed(2) + '%';
-
-            // Actualizar el color de la barra según el progreso
-            const fillElement = document.getElementById('fill');
-            const r = Math.max(0, Math.min(255, Math.floor(255 - (progress * 2.55)))); // De rojo a verde
-            const g = Math.max(0, Math.min(255, Math.floor(progress * 2.55)));
-            //fillElement.style.background = `linear-gradient(90deg, rgb(${r}, ${g}, 0), rgb(${r + 50}, ${g + 50}, 0))`;
-            // He preferido mantener el verde elegante para el piso, pero puedes descomentar lo anterior si quieres el cambio de color rojo-verde.
-
-            // Calcular cuenta atrás
-            const timeLeft = endDate - now;
-
-            if (timeLeft <= 0) {
-                document.getElementById('countdown').innerHTML = '¡Enhorabuena, tu piso ya está listo!';
-                document.getElementById('fill').style.width = '100%';
-                document.getElementById('percentage').innerText = '100.00%';
+            // Countdown
+            const diff = end - now;
+            if (diff <= 0) {
+                confetti({ pixelArt: true, particleCount: 150, spread: 70, origin: { y: 0.6 } });
                 return;
             }
 
-            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-            document.getElementById('days').innerText = days;
-            document.getElementById('hours').innerText = hours;
-            document.getElementById('minutes').innerText = minutes;
-            document.getElementById('seconds').innerText = seconds;
+            document.getElementById('d').innerText = Math.floor(diff / (1000 * 60 * 60 * 24));
+            document.getElementById('h').innerText = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            document.getElementById('m').innerText = Math.floor((diff / 1000 / 60) % 60);
+            document.getElementById('s').innerText = Math.floor((diff / 1000) % 60);
         }
 
-        // Llamar a la función una vez al inicio y luego cada segundo
-        updateProgress();
-        setInterval(updateProgress, 1000);
+        // Icono flotante con GSAP
+        gsap.to(".icon-box", { y: -15, repeat: -1, yoyo: true, duration: 2, ease: "sine.inOut" });
 
-        // Formatear las fechas en el HTML
-        document.getElementById('startDate').innerText = new Date(startDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
-        document.getElementById('endDate').innerText = new Date(endDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
-
+        update();
+        setInterval(update, 1000);
     </script>
 </body>
 </html>
