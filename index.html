@@ -20,29 +20,30 @@
         }
 
         body, html {
-            margin: 0; padding: 0; height: 100%; width: 100%;
+            margin: 0; padding: 0; min-height: 100vh; width: 100%;
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg);
             color: white;
             display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        /* --- EFECTO AGUA MEJORADO --- */
+        /* --- EFECTO AGUA --- */
         .water-container {
-            position: absolute;
+            position: fixed; /* Mejor fixed para móviles */
             bottom: 0; left: 0; width: 100%; height: 0%;
-            background: linear-gradient(180deg, var(--water) 0%, rgba(15, 23, 42, 0.8) 100%);
+            background: linear-gradient(180deg, var(--water) 0%, rgba(15, 23, 42, 0.9) 100%);
             z-index: 1;
+            transition: height 0.5s ease;
         }
 
         .waves {
             position: absolute;
-            top: -100px; left: 0; width: 100%; height: 100px;
+            top: -50px; left: 0; width: 100%; height: 50px;
         }
 
         .editorial {
-            display: block; width: 100%; height: 100px; margin: 0;
+            display: block; width: 100%; height: 50px; margin: 0;
         }
 
         .parallax > use {
@@ -58,36 +59,49 @@
             100% { transform: translate3d(85px,0,0); }
         }
 
-        /* --- CARD --- */
+        /* --- CARD RESPONSIVE --- */
         .card {
             position: relative; z-index: 10;
-            width: 85%; max-width: 550px;
-            padding: 50px;
+            width: 90%; 
+            max-width: 550px;
+            margin: 20px auto;
+            padding: 2.5rem 1.5rem;
             background: var(--glass);
-            border-radius: 40px;
+            border-radius: 30px;
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1);
             text-align: center;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            box-sizing: border-box;
         }
 
         .icon-box {
-            font-size: 4.5rem; color: var(--primary);
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px var(--primary));
+            font-size: 3.5rem; color: var(--primary);
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 15px var(--primary));
         }
 
-        h1 { font-size: 1.6rem; font-weight: 300; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
+        h1 { 
+            font-size: 1.2rem; 
+            font-weight: 300; 
+            margin-bottom: 0.5rem; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase;
+            line-height: 1.4;
+        }
 
         .percentage-container {
-            font-size: 5.5rem; font-weight: 700;
-            margin: 15px 0;
+            font-size: clamp(3.5rem, 15vw, 5.5rem); /* Ajuste dinámico según pantalla */
+            font-weight: 700;
+            margin: 1rem 0;
             font-variant-numeric: tabular-nums;
+            line-height: 1;
         }
 
         .progress-rail {
             background: rgba(255,255,255,0.1);
-            height: 8px; border-radius: 10px; margin: 30px 0; overflow: hidden;
+            height: 10px; border-radius: 10px; margin: 2rem 0; overflow: hidden;
         }
 
         .progress-bar {
@@ -97,12 +111,31 @@
         }
 
         .countdown-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 30px;
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            margin-top: 1.5rem;
+        }
+
+        .time-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 5px;
+            border-radius: 15px;
         }
 
         .time-box span { display: block; }
-        .t-num { font-size: 1.8rem; font-weight: 700; }
-        .t-lab { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-top: 5px; }
+        .t-num { font-size: 1.4rem; font-weight: 700; }
+        .t-lab { font-size: 0.55rem; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
+
+        /* --- AJUSTES ESPECÍFICOS PARA MÓVILES --- */
+        @media (max-width: 480px) {
+            .card { padding: 2rem 1rem; }
+            .icon-box { font-size: 2.8rem; }
+            h1 { font-size: 1rem; }
+            .t-num { font-size: 1.2rem; }
+            .t-lab { font-size: 0.5rem; }
+            .countdown-grid { gap: 5px; }
+        }
 
     </style>
 </head>
@@ -135,10 +168,22 @@
         </div>
 
         <div class="countdown-grid">
-            <div class="time-box"><span class="t-num" id="d">0</span><span class="t-lab">Días</span></div>
-            <div class="time-box"><span class="t-num" id="h">0</span><span class="t-lab">Hrs</span></div>
-            <div class="time-box"><span class="t-num" id="m">0</span><span class="t-lab">Min</span></div>
-            <div class="time-box"><span class="t-num" id="s">0</span><span class="t-lab">Seg</span></div>
+            <div class="time-box">
+                <span class="t-num" id="d">0</span>
+                <span class="t-lab">Días</span>
+            </div>
+            <div class="time-box">
+                <span class="t-num" id="h">0</span>
+                <span class="t-lab">Hrs</span>
+            </div>
+            <div class="time-box">
+                <span class="t-num" id="m">0</span>
+                <span class="t-lab">Min</span>
+            </div>
+            <div class="time-box">
+                <span class="t-num" id="s">0</span>
+                <span class="t-lab">Seg</span>
+            </div>
         </div>
     </div>
 
@@ -157,19 +202,20 @@
             gsap.to("#water", { height: prog + "%", duration: 3, ease: "sine.inOut" });
             
             // Animación del número
-            let obj = { val: parseFloat(document.getElementById('pct-val').innerText) };
-            gsap.to(obj, {
+            let displayVal = { val: parseFloat(document.getElementById('pct-val').innerText) };
+            gsap.to(displayVal, {
                 val: prog,
                 duration: 2,
                 onUpdate: () => {
-                    document.getElementById('pct-val').innerText = obj.val.toFixed(2);
+                    document.getElementById('pct-val').innerText = displayVal.val.toFixed(2);
                 }
             });
 
             // Countdown
             const diff = end - now;
             if (diff <= 0) {
-                confetti({ pixelArt: true, particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                document.getElementById('pct-val').innerText = "100.00";
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
                 return;
             }
 
@@ -179,8 +225,8 @@
             document.getElementById('s').innerText = Math.floor((diff / 1000) % 60);
         }
 
-        // Icono flotante con GSAP
-        gsap.to(".icon-box", { y: -15, repeat: -1, yoyo: true, duration: 2, ease: "sine.inOut" });
+        // Icono flotante
+        gsap.to(".icon-box", { y: -10, repeat: -1, yoyo: true, duration: 2, ease: "sine.inOut" });
 
         update();
         setInterval(update, 1000);
