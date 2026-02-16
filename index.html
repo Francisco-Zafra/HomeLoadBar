@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Barra de Progreso 2025-2028</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #1a1a1a; color: white; margin: 0; }
+        .container { width: 80%; max-width: 600px; text-align: center; }
+        .progress-bg { background: #333; border-radius: 20px; height: 30px; width: 100%; overflow: hidden; margin-top: 20px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .progress-fill { background: linear-gradient(90deg, #4caf50, #8bc34a); height: 100%; width: 0%; transition: width 1s ease-in-out; }
+        #percentage { font-size: 2rem; font-weight: bold; margin-bottom: 10px; }
+        .dates { display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.9rem; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Progreso del Proyecto</h1>
+        <div id="percentage">0%</div>
+        <div class="progress-bg">
+            <div class="progress-fill" id="fill"></div>
+        </div>
+        <div class="dates">
+            <span>Nov 2025</span>
+            <span>Jun 2028</span>
+        </div>
+    </div>
+
+    <script>
+        function updateProgress() {
+            const start = new Date('2025-11-01').getTime();
+            const end = new Date('2028-06-01').getTime();
+            const now = Date.now();
+
+            let progress = ((now - start) / (end - start)) * 100;
+            
+            // Limitadores para que no baje de 0 ni suba de 100
+            progress = Math.max(0, Math.min(100, progress));
+
+            document.getElementById('fill').style.width = progress.toFixed(4) + '%';
+            document.getElementById('percentage').innerText = progress.toFixed(4) + '%';
+        }
+
+        setInterval(updateProgress, 1000); // Se actualiza cada segundo
+        updateProgress();
+    </script>
+</body>
+</html>
