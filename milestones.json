@@ -1,0 +1,50 @@
+[
+  {
+    "date": "2025-11-13",
+    "name": "Reserva",
+    "abbr": "RSV",
+    "icon": "fa-file-signature"
+  },
+  {
+    "date": "2026-03-16",
+    "name": "Contrato",
+    "abbr": "CON",
+    "icon": "fa-file-signature"
+  },
+  {
+    "date": "2026-04-24",
+    "name": "Inicio de obras",
+    "abbr": "OBR",
+    "icon": "fa-hard-hat"
+  },
+  {
+    "date": "2026-06-01",
+    "name": "Pago 1",
+    "abbr": "P1",
+    "icon": "fa-coins"
+  },
+  {
+    "date": "2027-01-01",
+    "name": "Pago 2",
+    "abbr": "P2",
+    "icon": "fa-coins"
+  },
+  {
+    "date": "2027-06-01",
+    "name": "Pago 3",
+    "abbr": "P3",
+    "icon": "fa-coins"
+  },
+  {
+    "date": "2027-12-01",
+    "name": "Pago 4",
+    "abbr": "P4",
+    "icon": "fa-coins"
+  },
+  {
+    "date": "2028-06-01",
+    "name": "Entrega de llaves",
+    "abbr": "KEY",
+    "icon": "fa-key"
+  }
+]
