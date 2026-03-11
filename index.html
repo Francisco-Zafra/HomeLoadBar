@@ -297,6 +297,79 @@ h1{
 }
 .game-start-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(74,222,128,.5)}
 .game-hint{font-size:.62rem;color:var(--muted);margin-top:.6rem}
+
+/* ── NAME ENTRY MODAL ── */
+.name-modal{
+  position:absolute;inset:0;border-radius:28px;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:rgba(5,14,26,.96);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  padding:2rem;
+}
+.name-modal.open{opacity:1;pointer-events:all}
+.name-modal .trophy{font-size:2.8rem;animation:trophyPop .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes trophyPop{from{transform:scale(0) rotate(-15deg)}to{transform:scale(1) rotate(0)}}
+.name-modal h3{
+  font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;
+  background:linear-gradient(135deg,#fcd34d,#f59e0b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.name-modal p{font-size:.75rem;color:var(--muted);text-align:center;line-height:1.5}
+.name-input{
+  width:100%;padding:10px 16px;border-radius:12px;border:1px solid rgba(74,222,128,.3);
+  background:rgba(255,255,255,.06);color:var(--text);font-family:'Inter',sans-serif;
+  font-size:.9rem;text-align:center;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.name-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(74,222,128,.15)}
+.name-input::placeholder{color:var(--muted)}
+.name-submit{
+  padding:9px 32px;border-radius:99px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#fcd34d,#f59e0b);
+  color:#1a0a00;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1.5px;
+  box-shadow:0 0 20px rgba(251,191,36,.35);transition:transform .15s,box-shadow .15s;
+}
+.name-submit:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(251,191,36,.5)}
+.name-skip{font-size:.6rem;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:-4px}
+.name-skip:hover{color:var(--text)}
+
+/* ── LEADERBOARD ── */
+.leaderboard{
+  margin-top:.9rem;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;
+}
+.lb-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;background:rgba(74,222,128,.05);
+  border-bottom:1px solid rgba(74,222,128,.1);
+}
+.lb-header span{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.lb-clear{font-size:.55rem;color:var(--muted);cursor:pointer;text-decoration:underline;border:none;background:none;color:var(--muted)}
+.lb-clear:hover{color:#ef4444}
+.lb-row{
+  display:grid;grid-template-columns:24px 1fr auto;
+  align-items:center;gap:8px;padding:7px 12px;
+  border-bottom:1px solid rgba(255,255,255,.04);font-size:.75rem;
+  transition:background .2s;
+}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:rgba(255,255,255,.03)}
+.lb-rank{
+  font-family:'Bebas Neue',sans-serif;font-size:.95rem;
+  color:var(--muted);text-align:center;
+}
+.lb-row.gold   .lb-rank{color:#fcd34d}
+.lb-row.silver .lb-rank{color:#cbd5e1}
+.lb-row.bronze .lb-rank{color:#c2865a}
+.lb-row.new-record{background:rgba(251,191,36,.06);animation:lbFlash 1s ease}
+@keyframes lbFlash{0%,100%{background:rgba(251,191,36,.06)}50%{background:rgba(251,191,36,.14)}}
+.lb-name{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{
+  font-family:'Bebas Neue',sans-serif;font-size:1.1rem;
+  background:linear-gradient(135deg,#fff,var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.lb-empty{padding:12px;text-align:center;font-size:.7rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -322,6 +395,24 @@ h1{
     </div>
     <button class="game-start-btn" id="gameStartBtn">JUGAR</button>
     <div class="game-hint" id="gameHint">Haz clic en 🔑 para atraparlas · ¡cuidado con las 💣!</div>
+
+    <!-- Leaderboard -->
+    <div class="leaderboard" id="leaderboard">
+      <div class="lb-header">
+        <span>🏆 Clasificación global</span>
+      </div>
+      <div id="lbRows"><div class="lb-empty">Aún no hay puntuaciones</div></div>
+    </div>
+
+    <!-- Name entry modal (shown on new record) -->
+    <div class="name-modal" id="nameModal">
+      <div class="trophy">🏆</div>
+      <h3>¡Nuevo récord!</h3>
+      <p id="nameModalMsg"></p>
+      <input class="name-input" id="nameInput" maxlength="20" placeholder="Tu nombre…" autocomplete="off">
+      <button class="name-submit" id="nameSubmit">GUARDAR</button>
+      <span class="name-skip" id="nameSkip">Saltar</span>
+    </div>
   </div>
 </div>
 
@@ -764,164 +855,269 @@ const gCanvas=document.getElementById('gameCanvas');
 const gCtx=gCanvas.getContext('2d');
 const GW=360,GH=280;
 
-document.getElementById('gameBtn').addEventListener('click',()=>gOverlay.classList.add('open'));
-document.getElementById('gameClose').addEventListener('click',()=>{gOverlay.classList.remove('open');stopGame()});
+/* ─────────────────────────────────────
+   ⚙️  CONFIGURACIÓN — cambia esta URL
+   1. Ve a https://www.npoint.io
+   2. Haz clic en "New Document"
+   3. Pega exactamente esto como contenido: []
+   4. Copia la URL de la API (ej: https://api.npoint.io/abc123)
+   5. Pégala aquí abajo:
+───────────────────────────────────── */
+const NPOINT_URL = 'https://api.npoint.io/15510b57c5c8bdea0e3b';
 
-let gRunning=false,gScore=0,gBest=0,gTimeLeft=30,gTimer=null;
-let gItems=[],gParticles=[],gFrame=0,gAnimId=null;
+/* ── Leaderboard (npoint.io global) ── */
+let boardCache = [];   // local cache while session is open
+let boardReady = false;
 
-const EMOJIS_GOOD=['🔑','🔑','🔑','🏠','⭐'];
-const EMOJIS_BAD=['💣','🧨'];
+async function fetchBoard() {
+  try {
+    const r = await fetch(NPOINT_URL, {cache:'no-store'});
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    boardCache = Array.isArray(data) ? data : [];
+    boardReady = true;
+  } catch {
+    // API unreachable — keep working with local cache
+    boardReady = true;
+  }
+  return boardCache;
+}
 
-function startGame(){
-  gScore=0;gTimeLeft=30;gItems=[];gParticles=[];gFrame=0;gRunning=true;
-  document.getElementById('gScore').textContent='0';
-  document.getElementById('gTime').textContent='30';
-  document.getElementById('gameStartBtn').style.display='none';
-  document.getElementById('gameHint').textContent='¡Haz clic en 🔑 y 🏠 para sumar puntos!';
+async function pushBoard(board) {
+  try {
+    await fetch(NPOINT_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(board)
+    });
+  } catch {
+    // silently fail — data still shown locally this session
+  }
+}
+
+function getBest() {
+  return boardCache.length ? boardCache[0].score : 0;
+}
+
+async function addEntry(name, score) {
+  await fetchBoard(); // refresh before writing to avoid overwriting concurrent entries
+  const entry = {
+    name: (name||'').trim() || 'Anónimo',
+    score,
+    date: new Date().toLocaleDateString('es-ES')
+  };
+  boardCache.push(entry);
+  boardCache.sort((a,b) => b.score - a.score);
+  boardCache = boardCache.slice(0, 8); // keep top 8
+  await pushBoard(boardCache);
+}
+
+function renderBoard(highlightScore=null) {
+  const rows = document.getElementById('lbRows');
+  if (!boardReady) {
+    rows.innerHTML = '<div class="lb-empty">⏳ Cargando clasificación…</div>';
+    return;
+  }
+  if (!boardCache.length) {
+    rows.innerHTML = '<div class="lb-empty">Sé el primero en aparecer aquí 🏆</div>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉','4.','5.','6.','7.','8.'];
+  const cls    = ['gold','silver','bronze','','','','',''];
+  rows.innerHTML = boardCache.map((e,i) => {
+    const isNew = highlightScore !== null && e.score === highlightScore
+                  && i === boardCache.findIndex(x => x.score === highlightScore);
+    return `<div class="lb-row ${cls[i]||''} ${isNew?'new-record':''}">
+      <span class="lb-rank">${medals[i]||i+1}</span>
+      <span class="lb-name">${e.name}</span>
+      <span class="lb-score">${e.score}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ── Name modal ── */
+const nameModal = document.getElementById('nameModal');
+
+function showNameModal(score) {
+  const prev = getBest();
+  document.getElementById('nameModalMsg').textContent =
+    prev > 0 ? `¡Superaste el récord de ${prev} pts con ${score} pts!`
+              : `¡Primera puntuación: ${score} puntos! 🎉`;
+  document.getElementById('nameInput').value = '';
+  nameModal.classList.add('open');
+  setTimeout(() => document.getElementById('nameInput').focus(), 300);
+
+  async function submit() {
+    const name = document.getElementById('nameInput').value;
+    nameModal.classList.remove('open');
+    document.getElementById('lbRows').innerHTML = '<div class="lb-empty">⏳ Guardando…</div>';
+    await addEntry(name, score);
+    renderBoard(score);
+    updateBestDisplay();
+  }
+  document.getElementById('nameSubmit').onclick = submit;
+  document.getElementById('nameSkip').onclick = async () => {
+    nameModal.classList.remove('open');
+    document.getElementById('lbRows').innerHTML = '<div class="lb-empty">⏳ Guardando…</div>';
+    await addEntry('Anónimo', score);
+    renderBoard(score);
+    updateBestDisplay();
+  };
+  document.getElementById('nameInput').onkeydown = e => { if (e.key==='Enter') submit(); };
+}
+
+function updateBestDisplay() {
+  document.getElementById('gBest').textContent = getBest();
+}
+
+/* ── Open / close ── */
+document.getElementById('gameBtn').addEventListener('click', async () => {
+  gOverlay.classList.add('open');
+  renderBoard();          // show loading immediately
+  await fetchBoard();
+  renderBoard();
+  updateBestDisplay();
+});
+document.getElementById('gameClose').addEventListener('click', () => {
+  gOverlay.classList.remove('open');
+  stopGame();
+  nameModal.classList.remove('open');
+});
+
+/* ── Game state ── */
+let gRunning=false, gScore=0, gTimeLeft=30, gTimer=null;
+let gItems=[], gParticles=[], gFrame=0, gAnimId=null;
+const EMOJIS_GOOD = ['🔑','🔑','🔑','🏠','⭐'];
+const EMOJIS_BAD  = ['💣','🧨'];
+
+function startGame() {
+  gScore=0; gTimeLeft=30; gItems=[]; gParticles=[]; gFrame=0; gRunning=true;
+  nameModal.classList.remove('open');
+  document.getElementById('gScore').textContent = '0';
+  document.getElementById('gTime').textContent  = '30';
+  document.getElementById('gameStartBtn').style.display = 'none';
+  document.getElementById('gameHint').textContent = '¡Haz clic en 🔑 y 🏠 para sumar puntos!';
   clearInterval(gTimer);
-  gTimer=setInterval(()=>{
-    gTimeLeft--;document.getElementById('gTime').textContent=gTimeLeft;
-    if(gTimeLeft<=0){stopGame(true);}
-  },1000);
-  if(gAnimId)cancelAnimationFrame(gAnimId);
+  gTimer = setInterval(() => {
+    gTimeLeft--;
+    document.getElementById('gTime').textContent = gTimeLeft;
+    if (gTimeLeft <= 0) stopGame(true);
+  }, 1000);
+  if (gAnimId) cancelAnimationFrame(gAnimId);
   gameLoop();
 }
 
-function stopGame(finished=false){
-  gRunning=false;
+async function stopGame(finished=false) {
+  gRunning = false;
   clearInterval(gTimer);
-  if(gScore>gBest){gBest=gScore;document.getElementById('gBest').textContent=gBest;}
-  document.getElementById('gameStartBtn').style.display='';
-  document.getElementById('gameStartBtn').textContent=finished?'JUGAR DE NUEVO':'JUGAR';
-  if(finished){
-    document.getElementById('gameHint').textContent=
-      gScore>=20?`¡Increíble! ${gScore} pts 🏆 ¡Mereces ese piso!`:
-      gScore>=10?`Bien hecho, ${gScore} puntos 🎉`:
-      `${gScore} puntos — ¡sigue practicando! 💪`;
+  document.getElementById('gameStartBtn').style.display = '';
+  document.getElementById('gameStartBtn').textContent = finished ? 'JUGAR DE NUEVO' : 'JUGAR';
+  if (finished) {
+    await fetchBoard(); // get latest before comparing
+    const prevBest  = getBest();
+    const isRecord  = gScore > 0 && gScore > prevBest;
+    if (isRecord) {
+      setTimeout(() => showNameModal(gScore), 400);
+    } else if (gScore > 0) {
+      // still save it even if not #1
+      document.getElementById('lbRows').innerHTML = '<div class="lb-empty">⏳ Guardando…</div>';
+      await addEntry('Anónimo', gScore);
+      renderBoard();
+    }
+    document.getElementById('gameHint').textContent =
+      isRecord  ? `🏆 ¡Nuevo récord! ${gScore} pts` :
+      gScore>=20 ? `¡Increíble! ${gScore} pts — ¡mereces ese piso!` :
+      gScore>=10 ? `Bien hecho, ${gScore} puntos 🎉` :
+                   `${gScore} puntos — ¡sigue practicando! 💪`;
   }
 }
 
-function spawnItem(){
-  const isBad=Math.random()<.22;
-  const emoji=isBad?EMOJIS_BAD[Math.floor(Math.random()*EMOJIS_BAD.length)]:EMOJIS_GOOD[Math.floor(Math.random()*EMOJIS_GOOD.length)];
-  const pts=emoji==='⭐'?3:emoji==='🏠'?2:1;
-  gItems.push({
-    x:30+Math.random()*(GW-60),y:-30,
-    vy:1.1+Math.random()*1.4,vx:(Math.random()-.5)*.4,
-    emoji,bad:isBad,pts,r:20,alive:true,
-    wobble:Math.random()*Math.PI*2,wobSpd:(Math.random()-.5)*.08,
-    scale:1,
-  });
+function spawnItem() {
+  const isBad = Math.random() < .22;
+  const emoji = isBad
+    ? EMOJIS_BAD[Math.floor(Math.random()*EMOJIS_BAD.length)]
+    : EMOJIS_GOOD[Math.floor(Math.random()*EMOJIS_GOOD.length)];
+  const pts = emoji==='⭐'?3 : emoji==='🏠'?2 : 1;
+  gItems.push({x:30+Math.random()*(GW-60),y:-30,vy:1.1+Math.random()*1.4,
+    vx:(Math.random()-.5)*.4,emoji,bad:isBad,pts,r:20,alive:true,
+    wobble:Math.random()*Math.PI*2,wobSpd:(Math.random()-.5)*.08});
 }
 
-function popParticles(x,y,good){
-  const n=good?10:6;
-  for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2,s=Math.random()*3+1;
-    gParticles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,
-      life:1,decay:.04,
-      color:good?`hsl(${130+Math.random()*40},80%,65%)`:`hsl(${0+Math.random()*30},80%,60%)`});
+function popParticles(x,y,good) {
+  for(let i=0;i<(good?10:6);i++){
+    const a=Math.random()*Math.PI*2, s=Math.random()*3+1;
+    gParticles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:1,decay:.04,
+      color:good?`hsl(${130+Math.random()*40},80%,65%)`:`hsl(${Math.random()*30},80%,60%)`});
   }
 }
 
-gCanvas.addEventListener('click',e=>{
-  if(!gRunning)return;
-  const rect=gCanvas.getBoundingClientRect();
-  const scaleX=GW/rect.width,scaleY=GH/rect.height;
-  const cx=(e.clientX-rect.left)*scaleX,cy=(e.clientY-rect.top)*scaleY;
-  let hit=false;
-  for(let i=gItems.length-1;i>=0;i--){
-    const it=gItems[i];
-    if(!it.alive)continue;
-    const dx=cx-it.x,dy=cy-it.y;
-    if(Math.sqrt(dx*dx+dy*dy)<it.r+8){
-      it.alive=false;hit=true;
-      if(it.bad){
-        gScore=Math.max(0,gScore-2);
-        popParticles(it.x,it.y,false);
-        // screen shake
+gCanvas.addEventListener('click', e => {
+  if (!gRunning) return;
+  const rect = gCanvas.getBoundingClientRect();
+  const cx = (e.clientX-rect.left)*(GW/rect.width);
+  const cy = (e.clientY-rect.top)*(GH/rect.height);
+  for (let i=gItems.length-1; i>=0; i--) {
+    const it = gItems[i]; if (!it.alive) continue;
+    const dx=cx-it.x, dy=cy-it.y;
+    if (Math.sqrt(dx*dx+dy*dy) < it.r+8) {
+      it.alive = false;
+      if (it.bad) {
+        gScore = Math.max(0,gScore-2); popParticles(it.x,it.y,false);
         gCanvas.style.transform='translate(4px,3px)';
         setTimeout(()=>gCanvas.style.transform='',80);
       } else {
-        gScore+=it.pts;
-        popParticles(it.x,it.y,true);
-        if(it.emoji==='⭐'||it.emoji==='🏠'){
-          confetti({particleCount:25,spread:50,origin:{x:(e.clientX)/window.innerWidth,y:(e.clientY)/window.innerHeight},colors:['#4ade80','#2dd4bf','#fff']});
-        }
+        gScore += it.pts; popParticles(it.x,it.y,true);
+        if (it.emoji==='⭐'||it.emoji==='🏠')
+          confetti({particleCount:25,spread:50,
+            origin:{x:e.clientX/window.innerWidth,y:e.clientY/window.innerHeight},
+            colors:['#4ade80','#2dd4bf','#fff']});
       }
-      document.getElementById('gScore').textContent=gScore;
-      break;
+      document.getElementById('gScore').textContent = gScore; break;
     }
   }
 });
 
-function gameLoop(){
-  if(!gRunning)return;
-  gFrame++;
+function gameLoop() {
+  if (!gRunning) return; gFrame++;
   gCtx.clearRect(0,0,GW,GH);
-
-  // bg
   const bgG=gCtx.createLinearGradient(0,0,0,GH);
   bgG.addColorStop(0,'rgba(5,14,26,1)');bgG.addColorStop(1,'rgba(10,30,55,1)');
-  gCtx.fillStyle=bgG;gCtx.fillRect(0,0,GW,GH);
-
-  // ground line
+  gCtx.fillStyle=bgG; gCtx.fillRect(0,0,GW,GH);
   gCtx.strokeStyle='rgba(74,222,128,.2)';gCtx.lineWidth=1;
   gCtx.beginPath();gCtx.moveTo(0,GH-6);gCtx.lineTo(GW,GH-6);gCtx.stroke();
-
-  // spawn rate increases over time
   const spawnRate=Math.max(30,80-Math.floor((30-gTimeLeft)*1.5));
-  if(gFrame%spawnRate===0)spawnItem();
-
-  // update + draw items
+  if(gFrame%spawnRate===0) spawnItem();
   gCtx.font='32px serif';gCtx.textAlign='center';gCtx.textBaseline='middle';
   for(let i=gItems.length-1;i>=0;i--){
-    const it=gItems[i];
-    if(!it.alive){gItems.splice(i,1);continue}
-    it.y+=it.vy;it.x+=it.vx;it.wobble+=it.wobSpd;
+    const it=gItems[i]; if(!it.alive){gItems.splice(i,1);continue}
+    it.y+=it.vy; it.x+=it.vx; it.wobble+=it.wobSpd;
     it.x=Math.max(20,Math.min(GW-20,it.x));
-    // hit ground
-    if(it.y>GH+20){
-      if(!it.bad){popParticles(it.x,GH-6,false);}
-      gItems.splice(i,1);continue;
-    }
-    gCtx.save();
-    gCtx.globalAlpha=1;
-    gCtx.translate(it.x,it.y);
-    gCtx.rotate(Math.sin(it.wobble)*.12);
-    // shadow
-    gCtx.shadowColor=it.bad?'rgba(255,80,80,.5)':'rgba(74,222,128,.5)';
-    gCtx.shadowBlur=12;
-    gCtx.fillText(it.emoji,0,0);
-    gCtx.restore();
-    // hover ring
+    if(it.y>GH+20){if(!it.bad)popParticles(it.x,GH-6,false);gItems.splice(i,1);continue}
+    gCtx.save();gCtx.translate(it.x,it.y);gCtx.rotate(Math.sin(it.wobble)*.12);
+    gCtx.shadowColor=it.bad?'rgba(255,80,80,.5)':'rgba(74,222,128,.5)';gCtx.shadowBlur=12;
+    gCtx.fillText(it.emoji,0,0);gCtx.restore();
     gCtx.beginPath();gCtx.arc(it.x,it.y,it.r+4,0,Math.PI*2);
     gCtx.strokeStyle=it.bad?'rgba(255,100,100,.15)':'rgba(74,222,128,.12)';
     gCtx.lineWidth=1;gCtx.stroke();
   }
-
-  // particles
   for(let i=gParticles.length-1;i>=0;i--){
-    const p=gParticles[i];
-    p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life-=p.decay;
+    const p=gParticles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life-=p.decay;
     if(p.life<=0){gParticles.splice(i,1);continue}
     gCtx.beginPath();gCtx.arc(p.x,p.y,3,0,Math.PI*2);
-    gCtx.fillStyle=p.color.replace(')',`,${p.life})`).replace('hsl','hsla');
-    gCtx.fill();
+    gCtx.fillStyle=p.color.replace(')',`,${p.life})`).replace('hsl','hsla');gCtx.fill();
   }
-
-  // time bar
   const tw=(gTimeLeft/30)*GW;
   gCtx.fillStyle='rgba(255,255,255,.06)';gCtx.fillRect(0,0,GW,4);
   const tg=gCtx.createLinearGradient(0,0,tw,0);
   tg.addColorStop(0,'#22c55e');tg.addColorStop(1,'#2dd4bf');
-  gCtx.fillStyle=tg;gCtx.fillRect(0,0,tw,4);
-
+  gCtx.fillStyle=tg; gCtx.fillRect(0,0,tw,4);
   gAnimId=requestAnimationFrame(gameLoop);
 }
 
-document.getElementById('gameStartBtn').addEventListener('click',startGame);
+document.getElementById('gameStartBtn').addEventListener('click', startGame);
+
+// Init
+updateBestDisplay();
 </script>
 </body>
 </html>
