@@ -1047,7 +1047,7 @@ class Component extends DCLogic {
       const t = new Date(m.date + 'T00:00:00').getTime();
       const f = Math.max(0, Math.min(1, (t - START) / (END - START)));
       const done = t <= now, next = i === nextIdx;
-      const align = i === 0 ? 'translateX(-20px)' : i === raw.length - 1 ? 'translateX(calc(-100% + 20px))' : 'translateX(-50%)';
+      const align = i === 0 ? 'translateX(calc(var(--nh, 20px) * -1))' : i === raw.length - 1 ? 'translateX(calc(-100% + var(--nh, 20px)))' : 'translateX(-50%)';
       const items = i === 0 ? 'flex-start' : i === raw.length - 1 ? 'flex-end' : 'center';
       let node = 'display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%;';
       if (done) node += ' background: ' + accent + '; color: #08110E; border: 2px solid ' + accent + '; box-shadow: 0 0 14px ' + tint(0.6) + ';';
@@ -1056,7 +1056,7 @@ class Component extends DCLogic {
       return {
         ...m,
         isClip: m.icon === 'clip', isDoc: m.icon === 'doc', isPay: m.icon === 'pay', isKey: m.icon === 'key',
-        nodeWrap: 'position: absolute; top: 2px; left: ' + (f * 100).toFixed(2) + '%; transform: ' + align + '; display: flex; flex-direction: column; align-items: ' + items + '; gap: 4px; animation: fadeUp .6s ease-out both; animation-delay: ' + (300 + i * 110) + 'ms;',
+        nodeWrap: 'position: absolute; top: 2px; left: ' + (f * 100).toFixed(2) + '%; width: 0; margin-left: ' + (i === 0 ? 'calc(var(--nh, 20px) * -1)' : i === raw.length - 1 ? 'var(--nh, 20px)' : '0') + '; display: flex; flex-direction: column; align-items: ' + items + '; gap: 4px; animation: fadeUp .6s ease-out both; animation-delay: ' + (300 + i * 110) + 'ms;',
         node,
         textColor: done ? '#E8F2EC' : next ? '#FFD27A' : '#8FA89B',
         tick: 'position: absolute; left: 0; bottom: ' + (f * 100).toFixed(2) + '%; transform: translateY(50%); display: flex; align-items: center; gap: 6px;',
