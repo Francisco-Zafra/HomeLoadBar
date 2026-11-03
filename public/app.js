@@ -225,7 +225,7 @@ class Component extends DCLogic {
     let hovered = null;
     const newFish = (x, d, baby, now) => {
       const adultS = rnd(7, 17);
-      return { id: Math.random().toString(36).slice(2), name: pickName(), x, d: d == null ? rnd(0.12, 0.9) : d, s: baby ? 3.5 : adultS, adultS, adult: !baby, bornAt: baby ? now : now - rnd(20, 120) * DAY, fedAt: now, fedLevel: baby ? 0.6 : rnd(0.7, 1.1), breedAt: 0, v: rnd(0.025, 0.07), dir: Math.random() < 0.5 ? -1 : 1, ph: rnd(0, 6.28), wob: rnd(0, 6.28), col: FISH_COLS[Math.floor(Math.random() * 4)], boost: 0, food: 1, dead: false };
+      return { id: Math.random().toString(36).slice(2), name: pickName(), x, d: d == null ? rnd(0.12, 0.9) : d, s: baby ? 3.5 : adultS, adultS, adult: !baby, bornAt: baby ? now : now - rnd(20, 120) * DAY, fedAt: now, fedLevel: baby ? 0.6 : rnd(0.7, 1.1), breedAt: 0, v: rnd(0.025, 0.07), dir: Math.random() < 0.5 ? -1 : 1, ph: rnd(0, 6.28), wob: rnd(0, 6.28), col: FISH_COLS[Math.floor(Math.random() * 4)], boost: 0, food: 1, dead: false, front: Math.random() < 0.5 };
     };
     // Población inicial: los peces guardados en Netlify Blobs. Si no hay servidor (abriendo el
     // archivo en local) se simula que la última visita fue hace "diasSinVisitar" días.
@@ -347,24 +347,24 @@ class Component extends DCLogic {
       if (this.levelNow != null && Math.abs(mouse.y - this.levelNow) < 36 && T - lastRip > 0.12) { ripples.push({ x: mouse.x, t: T, A: 4 }); lastRip = T; }
     };
     window.addEventListener('pointermove', this.onMove);
-    const drawFish = (x, y, s, dir, ph, col, a, ang, happy) => {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(ang || 0); ctx.scale(dir, 1);
-      ctx.fillStyle = 'rgba(' + col[0] + ',' + col[1] + ',' + col[2] + ',' + a + ')';
-      ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.42, 0, 0, 6.2832); ctx.fill();
+    const drawFish = (x, y, s, dir, ph, col, a, ang, happy, g = ctx) => {
+      g.save(); g.translate(x, y); g.rotate(ang || 0); g.scale(dir, 1);
+      g.fillStyle = 'rgba(' + col[0] + ',' + col[1] + ',' + col[2] + ',' + a + ')';
+      g.beginPath(); g.ellipse(0, 0, s, s * 0.42, 0, 0, 6.2832); g.fill();
       const tw = Math.sin(ph) * s * 0.18;
-      ctx.beginPath(); ctx.moveTo(-s * 0.8, 0); ctx.lineTo(-s * 1.55, -s * 0.5 + tw); ctx.lineTo(-s * 1.4, tw * 0.3); ctx.lineTo(-s * 1.55, s * 0.5 + tw); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-s * 0.2, -s * 0.38); ctx.quadraticCurveTo(s * 0.1, -s * 0.8, s * 0.35, -s * 0.36); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,' + a * 0.35 + ')';
-      ctx.beginPath(); ctx.ellipse(s * 0.1, -s * 0.12, s * 0.55, s * 0.12, -0.1, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = 'rgba(4,16,12,' + a + ')';
-      ctx.beginPath(); ctx.arc(s * 0.55, -s * 0.06, Math.max(1, s * 0.08), 0, 6.2832); ctx.fill();
+      g.beginPath(); g.moveTo(-s * 0.8, 0); g.lineTo(-s * 1.55, -s * 0.5 + tw); g.lineTo(-s * 1.4, tw * 0.3); g.lineTo(-s * 1.55, s * 0.5 + tw); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(-s * 0.2, -s * 0.38); g.quadraticCurveTo(s * 0.1, -s * 0.8, s * 0.35, -s * 0.36); g.fill();
+      g.fillStyle = 'rgba(255,255,255,' + a * 0.35 + ')';
+      g.beginPath(); g.ellipse(s * 0.1, -s * 0.12, s * 0.55, s * 0.12, -0.1, 0, 6.2832); g.fill();
+      g.fillStyle = 'rgba(4,16,12,' + a + ')';
+      g.beginPath(); g.arc(s * 0.55, -s * 0.06, Math.max(1, s * 0.08), 0, 6.2832); g.fill();
       if (happy && s > 7) {
-        ctx.strokeStyle = 'rgba(4,16,12,' + a + ')'; ctx.lineWidth = Math.max(1, s * 0.07);
-        ctx.beginPath(); ctx.arc(s * 0.68, s * 0.08, s * 0.16, 0.3, 2.4); ctx.stroke();
-        ctx.fillStyle = 'rgba(255,107,139,' + a * 0.6 + ')';
-        ctx.beginPath(); ctx.arc(s * 0.42, s * 0.12, s * 0.09, 0, 6.2832); ctx.fill();
+        g.strokeStyle = 'rgba(4,16,12,' + a + ')'; g.lineWidth = Math.max(1, s * 0.07);
+        g.beginPath(); g.arc(s * 0.68, s * 0.08, s * 0.16, 0.3, 2.4); g.stroke();
+        g.fillStyle = 'rgba(255,107,139,' + a * 0.6 + ')';
+        g.beginPath(); g.arc(s * 0.42, s * 0.12, s * 0.09, 0, 6.2832); g.fill();
       }
-      ctx.restore();
+      g.restore();
     };
     const heartPath = (c2, x, y, s) => {
       c2.beginPath();
@@ -636,6 +636,9 @@ class Component extends DCLogic {
         }
         const span = Math.max(1, depth - 60);
         const babies = [];
+        // cada pez nada delante o detrás del edificio; los de delante se pintan tras la capa de agua de la fachada
+        const frontFish = [];
+        const paintFish = (f, ...args) => { if (f.front) frontFish.push(args); else drawFish(...args); };
         let hov = null, hovD = 1e12;
         for (let i = fishes.length - 1; i >= 0; i--) {
           const f = fishes[i];
@@ -646,7 +649,7 @@ class Component extends DCLogic {
             if (f.deadY <= level + 6) f.fade -= dts / 5;
             if (f.fade <= 0) { fishes.splice(i, 1); continue; }
             if (depth >= 50) {
-              drawFish(f.x * W, f.deadY + Math.sin(T * 1.5 + f.wob) * 2, f.s, f.dir, 0, [150, 158, 152], 0.65 * f.fade, Math.PI, false);
+              paintFish(f, f.x * W, f.deadY + Math.sin(T * 1.5 + f.wob) * 2, f.s, f.dir, 0, [150, 158, 152], 0.65 * f.fade, Math.PI, false);
               const ddx = f.x * W - mouse.x, ddy = f.deadY - mouse.y, dd = ddx * ddx + ddy * ddy, rr = f.s * 1.4 + 10;
               if (dd < rr * rr && dd < hovD) { hovD = dd; hov = f; }
             }
@@ -664,6 +667,11 @@ class Component extends DCLogic {
           if (!f.adult) { const gk = Math.min(1, (simClock - f.bornAt) / (5 * DAY)); f.s = 3.5 + (f.adultS - 3.5) * gk; if (gk >= 1) f.adult = true; }
           const vigor = 0.45 + 0.55 * Math.min(1, f.food / 0.3);
           if (f.target && (f.target.eaten || heartsLive.indexOf(f.target) < 0)) f.target = null;
+          // los corazones caen por delante: quien va a por uno sale delante (si no está tapado, para que no aparezca de golpe)
+          if (f.target && !f.front) {
+            const b = this.bRect, lo = b && Math.min(b.x, (this.rRect || b).x) - f.s * 2, hi = b && b.x + b.w + f.s * 2;
+            if (!b || f.x * W < lo || f.x * W > hi) f.front = true;
+          }
           if (f.target && !reduce) {
             // nada hacia la comida
             const dxT = f.target.x / W - f.x;
@@ -687,8 +695,9 @@ class Component extends DCLogic {
             }
             if (f.d < 0.05) f.d += dts * 0.2;
           }
-          if (f.x > 1.05) { f.x = -0.05; f.d = rnd(0.12, 0.9); }
-          if (f.x < -0.05) { f.x = 1.05; f.d = rnd(0.12, 0.9); }
+          // al salir por un lado y entrar por el otro se sortea si pasa por delante o por detrás del edificio
+          if (f.x > 1.05) { f.x = -0.05; f.d = rnd(0.12, 0.9); f.front = Math.random() < 0.5; }
+          if (f.x < -0.05) { f.x = 1.05; f.d = rnd(0.12, 0.9); f.front = Math.random() < 0.5; }
           // ¡ñam! se come el corazón
           if (f.target) {
             const ex = f.x * W + f.dir * f.s * 0.6 - f.target.x, ey = fy - f.target.y;
@@ -703,7 +712,7 @@ class Component extends DCLogic {
               // bien alimentado: nacen crías
               if (f.adult && f.food >= 1 && simClock > f.breedAt && fishes.length + babies.length < 45) {
                 const n = 1 + Math.floor(Math.random() * 3);
-                for (let q = 0; q < n; q++) babies.push(newFish(f.x + rnd(-0.015, 0.015), f.d, true, simClock));
+                for (let q = 0; q < n; q++) babies.push(Object.assign(newFish(f.x + rnd(-0.015, 0.015), f.d, true, simClock), { front: f.front }));
                 f.breedAt = simClock + 3 * DAY; f.fedLevel -= 0.3; f.food = f.fedLevel;
                 for (let q = 0; q < 12; q++) sparks.push({ x: f.x * W, y: fy, vx: rnd(-90, 90), vy: rnd(-160, -40), life: 0.9, s: rnd(3, 7) });
                 this.sfx('birth');
@@ -716,7 +725,7 @@ class Component extends DCLogic {
           // con hambre pierden color
           const hk = f.food < 0.3 ? 1 - f.food / 0.3 : 0;
           const col = f.col.map((v, q) => Math.round(v + ([128, 138, 132][q] - v) * hk * 0.8));
-          drawFish(f.x * W, fy, f.s, f.dir, f.ph, col, (0.55 + 0.25 * (1 - Math.max(0, f.d)) + (party ? 0.15 : 0)) * (1 - hk * 0.3), 0, party || (f.happy || 0) > T);
+          paintFish(f, f.x * W, fy, f.s, f.dir, f.ph, col, (0.55 + 0.25 * (1 - Math.max(0, f.d)) + (party ? 0.15 : 0)) * (1 - hk * 0.3), 0, party || (f.happy || 0) > T);
         }
         hovered = hov;
         if (babies.length) { fishes.push(...babies); this.savePond(fishes); }
@@ -813,6 +822,7 @@ class Component extends DCLogic {
             }
           }
         }
+        for (const a of frontFish) drawFish(...a, fctx);
         // barquito de papel
         if (!reduce) { boat.x += boat.v * dt; if (boat.x > 1.08) boat.x = -0.08; }
         const bx = boat.x * W;
@@ -826,7 +836,7 @@ class Component extends DCLogic {
         ctx.fillStyle = c(0.95);
         ctx.beginPath(); ctx.moveTo(-3, -34); ctx.lineTo(-15, -30 + (party ? Math.sin(T * 10) * 2 : 0)); ctx.lineTo(-3, -26); ctx.closePath(); ctx.fill();
         ctx.restore();
-        // peces que saltan (muchos más en celebración)
+        // peces que saltan (muchos más en celebración), siempre por delante del edificio
         const maxJ = party ? 4 : 1;
         if (jumps.length < maxJ && T > nextJump && depth > 90 && !reduce) {
           const j = { dir: Math.random() < 0.5 ? -1 : 1, dist: rnd(110, 200), hgt: rnd(60, party ? 150 : 110), t0: T, dur: rnd(1.1, 1.5), col: FISH_COLS[Math.floor(Math.random() * 4)], spin: party && Math.random() < 0.4 };
@@ -834,7 +844,7 @@ class Component extends DCLogic {
           jumps.push(j);
           nextJump = T + (party ? rnd(0.6, 1.6) : rnd(6, 13));
           ripples.push({ x: j.x0, t: T, A: 6 });
-          for (let k = 0; k < 7; k++) drops.push({ x: j.x0, y: surfAt(j.x0), vx: rnd(-60, 60) + j.dir * 40, vy: rnd(-220, -120) });
+          for (let k = 0; k < 7; k++) drops.push({ x: j.x0, y: surfAt(j.x0), vx: rnd(-60, 60) + j.dir * 40, vy: rnd(-220, -120), front: true });
           this.sfx('plop');
         }
         for (let q = jumps.length - 1; q >= 0; q--) {
@@ -844,17 +854,17 @@ class Component extends DCLogic {
             jumps.splice(q, 1);
             const xe = j.x0 + j.dir * j.dist;
             ripples.push({ x: xe, t: T, A: 8 });
-            for (let k = 0; k < 12; k++) drops.push({ x: xe, y: surfAt(xe), vx: rnd(-90, 90), vy: rnd(-260, -120) });
+            for (let k = 0; k < 12; k++) drops.push({ x: xe, y: surfAt(xe), vx: rnd(-90, 90), vy: rnd(-260, -120), front: true });
             this.sfx('splash');
           } else {
             const jx = j.x0 + j.dir * j.dist * u;
             const jy = surfAt(jx) - j.hgt * 4 * u * (1 - u);
             let ang = Math.atan2(-j.hgt * 4 * (1 - 2 * u), j.dist) * j.dir;
             if (j.spin) ang += u * 6.2832 * j.dir;
-            drawFish(jx, jy, 13, j.dir, T * 20, j.col, 0.95, ang, party);
+            drawFish(jx, jy, 13, j.dir, T * 20, j.col, 0.95, ang, party, fctx);
           }
         }
-        // corazones de hype = comida: caen al agua, se hunden despacio y los peces van a por ellos
+        // corazones de hype = comida: caen al agua (por delante del edificio), se hunden despacio y los peces van a por ellos
         while (this.hearts.length) { const hh = this.hearts.shift(); heartsLive.push({ x: hh.x * W, y: -20, vy: 0, t: T, inWater: false, eaten: false }); }
         for (let k = heartsLive.length - 1; k >= 0; k--) {
           const hh = heartsLive[k];
@@ -865,7 +875,7 @@ class Component extends DCLogic {
             if (hh.y >= sY) {
               hh.inWater = true; hh.vy = 70;
               ripples.push({ x: hh.x, t: T, A: 6 });
-              for (let q = 0; q < 8; q++) drops.push({ x: hh.x, y: sY, vx: rnd(-70, 70), vy: rnd(-200, -90) });
+              for (let q = 0; q < 8; q++) drops.push({ x: hh.x, y: sY, vx: rnd(-70, 70), vy: rnd(-200, -90), front: true });
               this.sfx('plop');
             }
           } else {
@@ -879,17 +889,18 @@ class Component extends DCLogic {
             }
           }
           const hs = hh.inWater ? 12 : 16;
-          ctx.save(); ctx.shadowColor = 'rgba(255,107,139,0.9)'; ctx.shadowBlur = 12;
-          heartPath(ctx, hh.x, hh.y, hs); ctx.fillStyle = 'rgba(255,107,139,' + (hh.inWater ? 0.8 : 0.9) + ')'; ctx.fill();
-          ctx.restore();
-          heartPath(ctx, hh.x - 2.5, hh.y - 3.5, hs * 0.33); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fill();
+          fctx.save(); fctx.shadowColor = 'rgba(255,107,139,0.9)'; fctx.shadowBlur = 12;
+          heartPath(fctx, hh.x, hh.y, hs); fctx.fillStyle = 'rgba(255,107,139,' + (hh.inWater ? 0.8 : 0.9) + ')'; fctx.fill();
+          fctx.restore();
+          heartPath(fctx, hh.x - 2.5, hh.y - 3.5, hs * 0.33); fctx.fillStyle = 'rgba(255,255,255,0.45)'; fctx.fill();
         }
         // gotas
         for (let k = drops.length - 1; k >= 0; k--) {
           const d = drops[k];
           d.vy += 700 * dts; d.x += d.vx * dts; d.y += d.vy * dts;
           if (d.vy > 0 && d.y > surfAt(d.x)) { drops.splice(k, 1); continue; }
-          ctx.beginPath(); ctx.arc(d.x, d.y, 1.8, 0, 6.2832); ctx.fillStyle = 'rgba(230,255,244,0.85)'; ctx.fill();
+          const g = d.front ? fctx : ctx;
+          g.beginPath(); g.arc(d.x, d.y, 1.8, 0, 6.2832); g.fillStyle = 'rgba(230,255,244,0.85)'; g.fill();
         }
         for (let k = ripples.length - 1; k >= 0; k--) if (T - ripples[k].t > 3) ripples.splice(k, 1);
       } else {
@@ -901,7 +912,7 @@ class Component extends DCLogic {
         const s = sparks[k];
         s.vy += 260 * dts; s.x += s.vx * dts; s.y += s.vy * dts; s.life -= dts * 0.8;
         if (s.life <= 0) { sparks.splice(k, 1); continue; }
-        heartPath(ctx, s.x, s.y, s.s); ctx.fillStyle = 'rgba(255,140,165,' + s.life + ')'; ctx.fill();
+        heartPath(fctx, s.x, s.y, s.s); fctx.fillStyle = 'rgba(255,140,165,' + s.life + ')'; fctx.fill();
       }
       // --- confeti (delante del contenido) ---
       if (this.burstReq) { this.burstReq = false; burst(W * 0.25, H * 0.55, 160); burst(W * 0.75, H * 0.55, 160); }
