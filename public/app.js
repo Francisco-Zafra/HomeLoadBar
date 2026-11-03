@@ -177,13 +177,15 @@ class Component extends DCLogic {
     const fx = this.fx || document.querySelector('canvas[data-fx]');
     if (!cv || !fx) { this.waterRetry = setTimeout(() => this.startWater(), 100); return; }
     const ctx = cv.getContext('2d'), fctx = fx.getContext('2d');
+    // lienzo auxiliar (fuera de pantalla) para la capa de agua que cubre la fachada
+    const wcv = document.createElement('canvas'), wctx = wcv.getContext('2d');
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     let W = 0, H = 0;
     const resize = () => {
       const r = cv.getBoundingClientRect();
       W = r.width; H = r.height;
-      [cv, fx].forEach((el) => { el.width = Math.round(W * dpr); el.height = Math.round(H * dpr); });
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      [cv, fx, wcv].forEach((el) => { el.width = Math.round(W * dpr); el.height = Math.round(H * dpr); });
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(dpr, 0, 0, dpr, 0, 0); wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     this.onResize = resize;
@@ -636,7 +638,7 @@ class Component extends DCLogic {
         }
         const span = Math.max(1, depth - 60);
         const babies = [];
-        // cada pez nada delante o detrás del edificio; los de delante se pintan tras la capa de agua de la fachada
+        // cada pez nada delante o detrás del edificio; los de delante se pintan más abajo, bajo la capa de agua de la fachada
         const frontFish = [];
         const paintFish = (f, ...args) => { if (f.front) frontFish.push(args); else drawFish(...args); };
         let hov = null, hovD = 1e12;
@@ -775,45 +777,50 @@ class Component extends DCLogic {
           }
         }
         const surfAt = (x) => level + surf(x, T, amp, 0) + rip(x);
-        // el agua baña el edificio: capa translúcida delante de la fachada, reflejos de ventanas y espuma
+        // peces que nadan por delante del edificio (debajo de la capa de agua de la fachada)
+        for (const a of frontFish) drawFish(...a, fctx);
+        // el agua baña el edificio: capa translúcida delante de la fachada, reflejos de ventanas y espuma.
+        // Se pinta aparte y luego se pone encima, para que el difuminado de los bordes no borre los peces.
         const bR = this.bRect;
         if (bR && bR.w > 0) {
           const rR = this.rRect || { x: bR.x, w: bR.w };
           // de la izquierda del arrecife hasta justo antes de los textos de hitos (que quedan fuera del agua)
           const x0 = rR.x - 3, x1 = bR.x + bR.w + 10;
-          fctx.save();
-          fctx.beginPath(); fctx.rect(x0, 0, x1 - x0, H); fctx.clip();
+          wctx.clearRect(0, 0, W, H);
+          wctx.save();
+          wctx.beginPath(); wctx.rect(x0, 0, x1 - x0, H); wctx.clip();
           const wp = new Path2D(); wp.moveTo(x0, H);
           for (let x = x0; x <= x1 + 4; x += 4) wp.lineTo(x, surfAt(x));
           wp.lineTo(x1 + 4, H); wp.closePath();
-          const wg = fctx.createLinearGradient(0, level - 12, 0, H);
+          const wg = wctx.createLinearGradient(0, level - 12, 0, H);
           wg.addColorStop(0, c(0.2)); wg.addColorStop(0.15, c(0.1)); wg.addColorStop(1, 'rgba(4,20,16,0.28)');
-          fctx.fillStyle = wg; fctx.fill(wp);
+          wctx.fillStyle = wg; wctx.fill(wp);
           for (let k = 0; k < 5; k++) {
             const cx = bR.x + 16 + (bR.w - 32) * (k + 0.5) / 5;
             for (let y = level; y < Math.min(H, level + 150); y += 4) {
               const kk = 1 - (y - level) / 150;
               const xo = Math.sin(y * 0.22 + T * 3 + k) * 4;
-              fctx.fillStyle = 'rgba(255,210,122,' + (0.24 * kk * (0.6 + 0.4 * Math.sin(y * 0.6 + T * 4 + k))) + ')';
-              fctx.fillRect(cx + xo - 5, y, 10, 2);
+              wctx.fillStyle = 'rgba(255,210,122,' + (0.24 * kk * (0.6 + 0.4 * Math.sin(y * 0.6 + T * 4 + k))) + ')';
+              wctx.fillRect(cx + xo - 5, y, 10, 2);
             }
           }
-          fctx.beginPath();
-          for (let x = x0; x <= x1 + 4; x += 4) { const y = surfAt(x); if (x === x0) fctx.moveTo(x, y); else fctx.lineTo(x, y); }
-          fctx.strokeStyle = 'rgba(235,255,246,0.7)'; fctx.lineWidth = 1.6; fctx.stroke();
+          wctx.beginPath();
+          for (let x = x0; x <= x1 + 4; x += 4) { const y = surfAt(x); if (x === x0) wctx.moveTo(x, y); else wctx.lineTo(x, y); }
+          wctx.strokeStyle = 'rgba(235,255,246,0.7)'; wctx.lineWidth = 1.6; wctx.stroke();
           for (let i = 0; i < 18; i++) {
             const fx2 = x0 + ((i * 37.7 + T * 12) % (x1 - x0));
-            fctx.beginPath(); fctx.arc(fx2, surfAt(fx2) + 2 + Math.sin(T * 3 + i) * 1.5, 1.2 + (i % 3) * 0.6, 0, 6.2832);
-            fctx.fillStyle = 'rgba(240,255,248,0.55)'; fctx.fill();
+            wctx.beginPath(); wctx.arc(fx2, surfAt(fx2) + 2 + Math.sin(T * 3 + i) * 1.5, 1.2 + (i % 3) * 0.6, 0, 6.2832);
+            wctx.fillStyle = 'rgba(240,255,248,0.55)'; wctx.fill();
           }
           // bordes difuminados: sin cortes rectos a los lados
-          fctx.globalCompositeOperation = 'destination-out';
-          const fl = fctx.createLinearGradient(x0, 0, x0 + 44, 0); fl.addColorStop(0, 'rgba(0,0,0,1)'); fl.addColorStop(1, 'rgba(0,0,0,0)');
-          fctx.fillStyle = fl; fctx.fillRect(x0, 0, 44, H);
-          const fr = fctx.createLinearGradient(x1 - 22, 0, x1, 0); fr.addColorStop(0, 'rgba(0,0,0,0)'); fr.addColorStop(1, 'rgba(0,0,0,1)');
-          fctx.fillStyle = fr; fctx.fillRect(x1 - 22, 0, 22, H);
-          fctx.globalCompositeOperation = 'source-over';
-          fctx.restore();
+          wctx.globalCompositeOperation = 'destination-out';
+          const fl = wctx.createLinearGradient(x0, 0, x0 + 44, 0); fl.addColorStop(0, 'rgba(0,0,0,1)'); fl.addColorStop(1, 'rgba(0,0,0,0)');
+          wctx.fillStyle = fl; wctx.fillRect(x0, 0, 44, H);
+          const fr = wctx.createLinearGradient(x1 - 22, 0, x1, 0); fr.addColorStop(0, 'rgba(0,0,0,0)'); fr.addColorStop(1, 'rgba(0,0,0,1)');
+          wctx.fillStyle = fr; wctx.fillRect(x1 - 22, 0, 22, H);
+          wctx.globalCompositeOperation = 'source-over';
+          wctx.restore();
+          fctx.drawImage(wcv, 0, 0, W, H);
           for (const ex of [bR.x, bR.x + bR.w]) {
             const ey = surfAt(ex);
             for (let q = 0; q < 7; q++) {
@@ -822,7 +829,6 @@ class Component extends DCLogic {
             }
           }
         }
-        for (const a of frontFish) drawFish(...a, fctx);
         // barquito de papel
         if (!reduce) { boat.x += boat.v * dt; if (boat.x > 1.08) boat.x = -0.08; }
         const bx = boat.x * W;
