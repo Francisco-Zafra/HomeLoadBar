@@ -214,6 +214,7 @@ class Component extends DCLogic {
     const DAY = 86400000;
     let simClock = Date.now(); // en vista previa "velocidad: rapida" 1 día = 1 minuto
     const satiety = (f, now) => Math.max(0, f.fedLevel - (now - f.fedAt) / (7 * DAY));
+    const FULL = 0.9; // a partir de aquí el pez está lleno y no va a por comida
     const deathAt = (f) => f.fedAt + (f.fedLevel * 7 + 3) * DAY;
     // nombres para los peces (sin repetir mientras queden libres)
     const NAMES = ['Pancho', 'Lola', 'Boquerón', 'Chanquete', 'Manolo', 'Curro', 'Rocío', 'Paco', 'Pepa', 'Chispa', 'Burbuja', 'Coral', 'Perla', 'Pipo', 'Triana', 'Biznaga', 'Espeto', 'Malagueta', 'Toñi', 'Fermín', 'Kiko', 'Rita', 'Gamba', 'Sardinita', 'Tula', 'Bombón', 'Canela', 'Fideo', 'Olivia', 'Pepino', 'Brisa', 'Marea', 'Remo', 'Faro', 'Ancla', 'Capitán', 'Almeja', 'Calamar', 'Croqueta', 'Limón', 'Luna', 'Turrón', 'Bruno', 'Vera', 'Leo', 'Mía', 'Churri', 'Pitita', 'Moraga', 'Jazmín'];
@@ -630,7 +631,7 @@ class Component extends DCLogic {
           if (fishes.filter((f) => f.target === hh).length >= 3) continue;
           let best = null, bd = 1e12;
           for (const f of fishes) {
-            if (f.target || f.dead) continue;
+            if (f.target || f.dead || satiety(f, simClock) > FULL) continue;
             const d2 = Math.pow(f.x * W - hh.x, 2) + Math.pow((f.py == null ? level : f.py) - hh.y, 2);
             if (d2 < bd) { bd = d2; best = f; }
           }
@@ -941,7 +942,7 @@ class Component extends DCLogic {
           const age = Math.max(0, Math.floor((simClock - f.bornAt) / DAY));
           const fedDays = Math.max(0, Math.floor((simClock - f.fedAt) / DAY));
           const fedTxt = fedDays === 0 ? 'ha comido hoy' : 'comió hace ' + (fedDays === 1 ? '1 día' : fedDays + ' días');
-          const st = f.dead ? 'Descanse en paz' : (f.food < 0.3 ? 'Con hambre' : f.food > 0.9 ? 'Lleno' : 'Contento') + ' · ' + fedTxt;
+          const st = f.dead ? 'Descanse en paz' : (f.food < 0.3 ? 'Con hambre' : f.food > FULL ? 'Lleno' : 'Contento') + ' · ' + fedTxt;
           const l1 = f.name + '  ·  ' + (!f.adult ? 'cría, ' : '') + (age === 1 ? '1 día' : age + ' días') + (f.dead ? ' de vida' : ' vivo');
           const l2 = st;
           fctx.font = '700 15px Inter, system-ui, sans-serif'; const w1 = fctx.measureText(l1).width;
