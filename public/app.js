@@ -330,7 +330,13 @@ class Component extends DCLogic {
       setDraftDate: (e) => this.setState({ draftDate: e.target.value }),
       setDraftNote: (e) => this.setState({ draftNote: e.target.value }),
       setDraftPin: (e) => this.setState({ draftPin: e.target.value }),
-      setDraftPhotos: (e) => { const files = Array.from((e.target && e.target.files) || []).slice(0, 12); this.setState({ draftPhotos: files.map((f) => ({ url: URL.createObjectURL(f), name: f.name, file: f })) }); },
+      // las fotos elegidas y las hechas con la cámara se van sumando (máx. 12)
+      addDraftPhotos: (e) => {
+        const files = Array.from((e.target && e.target.files) || []);
+        if (e.target) e.target.value = ''; // permite elegir o hacer otra foto seguida
+        const added = files.map((f) => ({ url: URL.createObjectURL(f), name: f.name, file: f }));
+        this.setState({ draftPhotos: this.state.draftPhotos.concat(added).slice(0, 12) });
+      },
       saving: !!this.state.saving,
       saveLabel: this.state.saving ? 'Guardando…' : 'Guardar visita',
       hasFormError: !!this.state.formError,

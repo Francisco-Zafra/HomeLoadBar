@@ -6,6 +6,8 @@ export class DCLogic extends Component {}
 
 const HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
 const ONLY_HOLE = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/;
+// atributos booleanos escritos sin valor (p. ej. <input multiple>): "" significa true
+const BOOL_ATTRS = new Set(['multiple', 'required', 'disabled', 'checked', 'readonly', 'autofocus', 'hidden', 'selected', 'open', 'novalidate']);
 
 function lookup(scope, path) {
   path = path.trim();
@@ -64,7 +66,7 @@ function conv(node, scope) {
       if (typeof v === 'function') props[ev] = v;
       continue;
     }
-    props[name] = v;
+    props[name] = BOOL_ATTRS.has(name) && v === '' ? true : v;
   }
   return h(tag, props, ...kids(node, scope));
 }

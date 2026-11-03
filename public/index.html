@@ -19,6 +19,9 @@ a{color:#3BE58A}a:hover{color:#8CF5BB}
 .mi svg{width:18px;height:18px}
 .hdr-btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border:1px solid #24443A;border-radius:999px;background:rgba(10,22,18,.6);color:#E8F2EC;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
 .hdr-btn:hover{border-color:#3BE58A}
+.pick{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;box-sizing:border-box;padding:0 12px;border-radius:10px;border:1px dashed #3A5A4E;background:#0C1814;color:#B9CCC2;font:500 14px Inter,system-ui,sans-serif;cursor:pointer}
+.pick:hover,.pick:focus-within{border-color:#3BE58A}
+.pick input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
 .txt-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 4px;border:0;background:none;color:#E8F2EC;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
 .txt-btn:hover{color:#3BE58A}
 @keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(255,210,122,.7)}100%{box-shadow:0 0 0 10px rgba(255,210,122,0)}}
@@ -147,10 +150,21 @@ a{color:#3BE58A}a:hover{color:#8CF5BB}
               Fecha de la visita
               <input type="date" required value="{{draftDate}}" onChange="{{setDraftDate}}" style="min-height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #3A5A4E; background: #0C1814; color: #E8F2EC; font: 500 15px Inter, system-ui, sans-serif; color-scheme: dark">
             </label>
-            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">
               Fotos
-              <input type="file" accept="image/*" multiple onChange="{{setDraftPhotos}}" style="min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px dashed #3A5A4E; background: #0C1814; color: #B9CCC2; font: 500 14px Inter, system-ui, sans-serif">
-            </label>
+              <div style="display: flex; gap: 8px">
+                <label class="pick" style="flex: 1 1 auto">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"></path></svg>
+                  Elegir fotos
+                  <input type="file" accept="image/*" multiple onChange="{{addDraftPhotos}}">
+                </label>
+                <!-- en el móvil abre directamente la cámara -->
+                <label class="pick" title="Hacer una foto" style="flex: none; width: 52px; padding: 0; border-style: solid; color: {{accent}}">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                  <input type="file" accept="image/*" capture="environment" aria-label="Hacer una foto" onChange="{{addDraftPhotos}}">
+                </label>
+              </div>
+            </div>
             <sc-if value="{{hasDraftPhotos}}" hint-placeholder-val="{{ false }}">
               <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
                 <sc-for list="{{draftPhotos}}" as="ph" hint-placeholder-count="2">
