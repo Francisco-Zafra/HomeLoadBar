@@ -11,356 +11,114 @@
 <style>
 body{margin:0;background:#08110E;overflow:hidden}
 a{color:#3BE58A}a:hover{color:#8CF5BB}
-.shell{position:relative;height:100vh;box-sizing:border-box;padding:18px 28px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"head head" "hero bldg" "bar bar";gap:16px 56px;overflow:hidden;transition:background 2s linear}
-.a-head,.a-hero,.a-bldg,.a-bar{position:relative;z-index:1}
-.a-head{grid-area:head;z-index:3}.a-hero{grid-area:hero}.a-bldg{grid-area:bldg;z-index:2}.a-bar{grid-area:bar}
-@media (max-width:1000px){body{overflow:auto}.shell{height:auto;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "hero" "bar" "bldg"}.a-bldg{height:620px}.ms-label{display:none}}
-/* Pantallas grandes (27"): el bloque del contador se centra en su columna y crece un poco */
-@media (min-width:1700px){
-.a-hero>*{width:min(100%,1040px);margin-left:auto;margin-right:auto;box-sizing:border-box}
-.pct{font-size:clamp(96px,24vh,330px)!important}
-.cd{max-width:none!important}
-}
-/* Móvil: todo cabe en una pantalla, sin scroll */
-@media (max-width:700px){
-body{overflow:hidden}
-.shell{height:100vh;height:100dvh;padding:12px 14px 8px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"head" "hero" "bldg" "bar";gap:10px}
-.a-bldg{height:auto!important;margin-bottom:0!important;justify-content:center}
-.m-hide{display:none!important}
-.a-head{flex-wrap:nowrap!important}
-.a-head>div{gap:6px!important;flex-wrap:nowrap!important}
-.hdr-btn{height:40px!important;padding:0 11px!important;gap:0!important}
-.ttl{font-size:19px!important}
-.pct{font-size:min(15vh,24vw)!important}
-.cd{gap:6px!important}
-.cd>div{padding:6px 2px!important;border-radius:10px!important}
-.cd>div>span:first-child{font-size:min(5vh,9.5vw)!important}
-.bcol{width:150px!important;margin-right:0!important;padding-top:0!important}
-.crane{width:150px!important;height:52px!important}
-.ruler{display:none!important}
-[data-reef]{margin:0 -30px!important}
-[data-reef] svg{width:210px!important;height:68px!important}
-.bar-in{height:50px!important;--nh:15px}
-.a-bar{padding:2px 24px 0!important}
-.node{width:30px!important;height:30px!important;margin-top:5px!important}
-.node svg{width:15px!important;height:15px!important}
-.scene{right:auto!important;left:50%!important;transform:translateX(-50%)!important;bottom:calc(100% + 12px)!important;width:240px!important}
-.away{top:62px!important;width:calc(100vw - 28px)!important}
-.party-big{font-size:54px!important}
-}
-@keyframes winOn{0%{filter:brightness(.25)}60%{filter:brightness(1.9)}100%{filter:brightness(1)}}
-@keyframes partyWin{0%{filter:hue-rotate(0deg) brightness(1)}100%{filter:hue-rotate(170deg) brightness(1.45)}}
-@keyframes floorIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(255,210,122,.65)}100%{box-shadow:0 0 0 16px rgba(255,210,122,0)}}
-@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+.shell{position:relative;height:100vh;height:100dvh;box-sizing:border-box;padding:max(14px,env(safe-area-inset-top)) 20px max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;overflow:hidden}
+.a-head,.stage{position:relative;z-index:1}
+.stage{flex:1 1 auto;min-height:0;width:100%;max-width:820px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;text-align:center}
+.cd>div+div{border-left:1px solid rgba(232,242,236,.14)}
+.ms-label{display:block}
+.mi svg{width:18px;height:18px}
+.hdr-btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border:1px solid #24443A;border-radius:999px;background:rgba(10,22,18,.6);color:#E8F2EC;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
+.hdr-btn:hover{border-color:#3BE58A}
+.txt-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 4px;border:0;background:none;color:#E8F2EC;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
+.txt-btn:hover{color:#3BE58A}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(255,210,122,.7)}100%{box-shadow:0 0 0 10px rgba(255,210,122,0)}}
 @keyframes beat{0%,60%,100%{transform:scale(1)}12%{transform:scale(1.2)}24%{transform:scale(1)}36%{transform:scale(1.12)}}
 @keyframes glowPulse{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-@keyframes partyPulse{0%,100%{transform:scale(1) rotate(0deg)}25%{transform:scale(1.035) rotate(-1deg)}75%{transform:scale(1.035) rotate(1deg)}}
-@keyframes chipWiggle{0%,100%{transform:rotate(0deg)}10%{transform:rotate(-3deg)}20%{transform:rotate(3deg)}30%{transform:rotate(0deg)}}
-@keyframes partyToast{0%{opacity:0;transform:scale(.6)}8%{opacity:1;transform:scale(1.06)}14%{transform:scale(1)}78%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.08);visibility:hidden}}
 @keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
 @keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
-@keyframes toastIn{0%{opacity:0;transform:translateY(-6px)}12%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
 .fade-up{animation:fadeUp .8s cubic-bezier(.2,.7,.2,1) both}
-.hdr-btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border:1px solid #24443A;border-radius:999px;background:rgba(10,22,18,.6);color:#E8F2EC;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
-.hdr-btn:hover{border-color:#3BE58A}
+@media (max-width:640px){.ms-label{display:none}.ms-keep{display:block!important}.m-hide{display:none!important}}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <template id="tpl">
-<div class="shell" style="{{skyBg}} color: #E8F2EC; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+<div class="shell" style="background: radial-gradient(ellipse 90% 60% at 50% 25%, #10261D 0%, #08110E 70%); color: #E8F2EC; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.45">
 
-  <!-- Cielo + agua con vida (detrás) y confeti (delante) -->
+  <!-- Agua que sube con el porcentaje -->
   <canvas data-water="1" ref="{{setCanvas}}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none"></canvas>
-  <canvas data-fx="1" ref="{{setFx}}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none"></canvas>
 
   <!-- Cabecera -->
-  <header class="a-head" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
-    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
-      <span style="display: inline-flex; align-items: center; gap: 10px; font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3BE58A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>
-        <span class="m-hide">Piso.exe</span>
-      </span>
-      <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #B9CCC2">
-        <sc-if value="{{isDay}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD27A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></sc-if>
-        <sc-if value="{{isTwilight}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10V2M5.2 11.2l1.4 1.4M2 18h2M20 18h2M17.4 12.6l1.4-1.4M22 22H2M16 18a4 4 0 0 0-8 0"></path></svg></sc-if>
-        <sc-if value="{{isNight}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9D6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></sc-if>
-        <span class="m-hide">{{skyLabel}}</span>
-      </span>
-    </div>
-    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
-      <button type="button" class="hdr-btn" onClick="{{openDiary}}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15Z"></path><path d="M20 17v5H6.5A2.5 2.5 0 0 1 4 19.5"></path></svg>
-        <span class="m-hide">Diario</span>
-      </button>
-      <button type="button" class="hdr-btn" aria-pressed="{{soundPressed}}" aria-label="{{soundLabel}}" title="{{soundLabel}}" onClick="{{toggleSound}}" style="width: 44px; padding: 0; justify-content: center; color: {{soundColor}}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
-          <sc-if value="{{sound}}" hint-placeholder-val="{{ false }}"><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></sc-if>
-          <sc-if value="{{muted}}" hint-placeholder-val="{{ true }}"><path d="m22 9-6 6M16 9l6 6"></path></sc-if>
-        </svg>
-      </button>
-      <!-- Población de peces -->
-      <span role="status" title="Cada corazón de hype es comida para los peces" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: rgba(10,22,18,.6); border: 1px solid #24443A; font-size: 14px; font-weight: 600; white-space: nowrap">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z"></path><path d="M18 12v.5"></path><path d="M16 17.93a9.77 9.77 0 0 1 0-11.86"></path><path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33"></path></svg>
-        {{fishAlive}}<span class="m-hide">&#160;peces</span>
-        <sc-if value="{{hasHungry}}" hint-placeholder-val="{{ false }}"><span class="m-hide" style="color: #FF9F6B">· {{fishHungry}} con hambre</span></sc-if>
-        <sc-if value="{{pondEmpty}}" hint-placeholder-val="{{ false }}"><span style="color: #FF9F6B">· ¡dales de comer!</span></sc-if>
-      </span>
-      <!-- Hype: contador + botón pequeño -->
-      <div title="{{hypeLevel}}" style="position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 4px 0 14px; box-sizing: border-box; border-radius: 999px; background: #1A1014; border: 1px solid #4A2430">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B8B" aria-hidden="true" style="filter: drop-shadow(0 0 6px rgba(255,107,139,.7)); animation: beat 1.4s ease-in-out infinite"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"></path></svg>
-        <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 24px; font-weight: 900; line-height: 1; color: #FF6B8B; font-variant-numeric: tabular-nums">{{hype}}</span>
-        <span class="m-hide" style="font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #FFB3C3">hype</span>
-        <button type="button" onClick="{{addHype}}" aria-label="Subir el hype" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #FF6B8B; cursor: pointer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1A0A0F" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-        </button>
-        <sc-if value="{{hasHypeToast}}" hint-placeholder-val="{{ false }}">
-          <span role="status" style="position: absolute; top: calc(100% + 8px); right: 0; white-space: nowrap; padding: 8px 12px; border-radius: 10px; background: #1A1014; border: 1px solid #FF6B8B; color: #FFD6DF; font-size: 13px; font-weight: 600; animation: toastIn 5s ease-out both">{{hypeToast}}</span>
-        </sc-if>
-      </div>
-    </div>
+  <header class="a-head" style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <span style="display: inline-flex; align-items: center; gap: 10px; font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3BE58A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>
+      <span class="m-hide">Piso.exe</span>
+    </span>
+    <button type="button" class="txt-btn" onClick="{{openDiary}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+      Diario de obra
+    </button>
   </header>
 
-  <!-- Contador grande -->
-  <section class="a-hero fade-up" style="min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.4vh">
-    <div style="display: flex; flex-direction: column; gap: 4px">
-      <p class="m-hide" style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #8FA89B">Cuenta atrás</p>
-      <h1 class="ttl" style="margin: 0; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 800; font-size: clamp(26px, 4vh, 44px); line-height: 1; letter-spacing: 0.05em; text-transform: uppercase">Entrega del mejor piso del mundo</h1>
-    </div>
-    <div style="position: relative; display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap">
-      <span aria-hidden="true" style="position: absolute; left: 0; top: 10%; width: 70%; height: 80%; border-radius: 50%; background: {{glow}}; filter: blur(70px); animation: glowPulse {{glowSpeed}} ease-in-out infinite"></span>
-      <p class="pct" style="position: relative; margin: 0; transform-origin: 30% 80%; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: clamp(96px, 24vh, 250px); line-height: 0.82; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: {{accent}}; text-shadow: 0 0 40px {{glow}}; animation: {{pctAnim}}">{{pctInt}}<span style="font-size: 0.42em">,{{pctDec}}%</span></p>
-      <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding-bottom: 1vh">
-        <p style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #8FA89B">completado</p>
-        <sc-if value="{{party}}" hint-placeholder-val="{{ false }}">
-          <button type="button" onClick="{{celebrate}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: #FFD27A; color: #1A1206; font: 600 14px Inter, system-ui, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 0 24px rgba(255,210,122,.6); animation: chipWiggle 2.2s ease-in-out infinite">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1206" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.8 11.3 2 22l10.7-3.8"></path><path d="M4 3h.01M22 8h.01M15 2h.01M22 20h.01"></path><path d="m22 2-2.2.8a2.9 2.9 0 0 0-1.9 3.1c.1.7-.4 1.3-1.1 1.4L16 7.5"></path><path d="m22 13-.8-.2a2.9 2.9 0 0 0-3 1.3"></path><path d="m11 2 .3.8a2.9 2.9 0 0 1-1.3 3"></path><path d="M11 13c1.9 1.9 2.8 4 2 4.8s-2.9 0-4.8-2-2.8-4-2-4.8 2.9 0 4.8 2Z"></path></svg>
-            ¡Hoy es el día! <strong style="font-weight: 800">{{partyName}}</strong> · Celebrar
-          </button>
-        </sc-if>
-        <sc-if value="{{notParty}}" hint-placeholder-val="{{ true }}">
-          <p style="margin: 0; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(19,38,30,.85); border: 1px solid #24443A; font-size: 14px; font-weight: 500; white-space: nowrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD27A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"></path><path d="M4 4h12l-2 4 2 4H4"></path></svg>
-            Próximo: <strong style="font-weight: 600">{{nextName}}</strong> · {{nextIn}}
-          </p>
-        </sc-if>
-      </div>
+  <main class="stage">
+    <!-- Título -->
+    <div class="fade-up" style="display: flex; flex-direction: column; gap: 6px">
+      <p style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: #8FA89B">Cuenta atrás</p>
+      <h1 style="margin: 0; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 800; font-size: clamp(24px, 6.4vw, 40px); line-height: 1; letter-spacing: 0.05em; text-transform: uppercase; text-wrap: balance">Entrega del mejor piso del mundo</h1>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 8px">
-      <p class="m-hide" style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #8FA89B">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14M5 2h14"></path><path d="M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4a2 2 0 0 0-.6 1.4V22"></path><path d="M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4a2 2 0 0 0 .6-1.4V2"></path></svg>
-        Tiempo restante
+    <!-- Porcentaje gigante -->
+    <div class="fade-up" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; animation-delay: .1s">
+      <span aria-hidden="true" style="position: absolute; left: 10%; right: 10%; top: 15%; bottom: 25%; border-radius: 50%; background: {{glow}}; filter: blur(60px); animation: glowPulse 3.2s ease-in-out infinite"></span>
+      <p style="position: relative; margin: 0; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: min(36vw, 27vh, 270px); line-height: 0.85; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: {{accent}}; text-shadow: 0 0 40px {{glow}}">{{pctInt}}<span style="font-size: 0.42em">,{{pctDec}}%</span></p>
+      <p style="position: relative; margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: #8FA89B">completado</p>
+      <p style="position: relative; margin: 6px 0 0; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: #CFE3D8">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFD27A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"></path><path d="M4 4h12l-2 4 2 4H4"></path></svg>
+        <span>Próximo: <strong style="font-weight: 600; color: #FFD27A">{{nextName}}</strong> · {{nextIn}}</span>
       </p>
-      <div class="cd" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; max-width: 640px">
-        <div style="display: flex; flex-direction: column; align-items: center; padding: 1.4vh 8px; border-radius: 12px; background: rgba(15,29,24,.85); border: 1px solid #1F3A30">
-          <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(34px, 6.5vh, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums">{{days}}</span>
-          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #8FA89B">días</span>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: center; padding: 1.4vh 8px; border-radius: 12px; background: rgba(15,29,24,.85); border: 1px solid #1F3A30">
-          <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(34px, 6.5vh, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums">{{hours}}</span>
-          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #8FA89B">horas</span>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: center; padding: 1.4vh 8px; border-radius: 12px; background: rgba(15,29,24,.85); border: 1px solid #1F3A30">
-          <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(34px, 6.5vh, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums">{{mins}}</span>
-          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #8FA89B">min</span>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: center; padding: 1.4vh 8px; border-radius: 12px; background: rgba(15,29,24,.85); border: 1px solid {{accent}}; box-shadow: 0 0 24px {{glow}}">
-          <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(34px, 6.5vh, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; color: {{accent}}">{{secs}}</span>
-          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #8FA89B"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{accent}}; animation: blink 1s steps(2, start) infinite"></span>seg</span>
-        </div>
-      </div>
     </div>
-  </section>
 
-  <!-- Edificio: segunda barra de progreso -->
-  <figure class="a-bldg" style="min-height: 0; margin: 0; display: flex; align-items: stretch; gap: 14px">
-    <div class="bcol" style="display: flex; flex-direction: column; width: 220px; height: 100%; margin-right: 146px; padding-top: 7vh; box-sizing: border-box">
-      <sc-if value="{{building}}" hint-placeholder-val="{{ true }}">
-        <svg class="crane" width="220" height="80" viewBox="0 0 280 102" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Grúa trabajando en el tejado" style="flex: none">
-          <path d="M196 102V24" stroke="#FFD27A" stroke-width="3"></path>
-          <path d="M190 102l6-12 6 12M190 84l12-12M190 60l12-12M190 40l12-12" stroke="#C9A85A" stroke-width="1.5"></path>
-          <g style="transform-box: view-box; transform-origin: 196px 24px; animation: sway 6s ease-in-out infinite">
-            <path d="M40 24h196" stroke="#FFD27A" stroke-width="3"></path>
-            <path d="M196 10 40 24M196 10l40 14" stroke="#C9A85A" stroke-width="1.5"></path>
-            <rect x="222" y="26" width="16" height="12" rx="1" fill="#3A5A4E"></rect>
-            <g style="animation: bob 3s ease-in-out infinite">
-              <path d="M80 24v34" stroke="#8FA89B" stroke-width="1.5"></path>
-              <path d="M76 58h8l-4 6z" fill="#8FA89B"></path>
-              <rect x="66" y="66" width="28" height="18" rx="2" fill="#1C2F28" stroke="#FFD27A" stroke-width="1.5"></rect>
-              <path d="M80 66v18M66 75h28" stroke="#FFD27A" stroke-width="1"></path>
-            </g>
-          </g>
-          <circle cx="196" cy="8" r="3" fill="#FF6B8B" style="animation: blink 1.4s ease-in-out infinite"></circle>
-        </svg>
-      </sc-if>
-      <sc-if value="{{finished}}" hint-placeholder-val="{{ false }}">
-        <div style="display: flex; align-items: flex-end; justify-content: center; height: 80px; padding-bottom: 6px">
-          <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.18em; color: {{accent}}; text-shadow: 0 0 16px {{glow}}">EL MEJOR PISO</span>
-        </div>
-      </sc-if>
-      <div data-bldg="1" style="position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px; box-sizing: border-box; border-radius: 6px 6px 0 0; background: #111F1A; border: 1px solid #24443A; border-bottom: 0">
-        <!-- regla de hitos (misma altura que las plantas, por encima del agua) -->
-        <div class="ruler" style="position: absolute; left: calc(100% + 14px); top: 8px; bottom: 8px; width: 132px">
-          <sc-for list="{{milestones}}" as="m" hint-placeholder-count="7">
-            <div style="{{m.tick}}">
-              <span style="width: 12px; height: 2px; background: {{m.tickColor}}"></span>
-              <span style="display: flex; flex-direction: column; line-height: 1.1">
-                <span style="font-size: 12px; font-weight: 600; color: {{m.textColor}}; text-shadow: 0 1px 6px rgba(0,0,0,.6)">{{m.name}}</span>
-                <span style="font-size: 11px; color: #B9CCC2; text-shadow: 0 1px 6px rgba(0,0,0,.6)">{{m.label}}</span>
-              </span>
-            </div>
-          </sc-for>
-        </div>
-        <sc-for list="{{floors}}" as="f" hint-placeholder-count="7">
-          <div style="{{f.rowStyle}}">
-            <sc-for list="{{f.windows}}" as="w" hint-placeholder-count="5">
-              <sc-if value="{{w.ours}}" hint-placeholder-val="{{ false }}">
-                <button type="button" aria-label="Nuestro piso, 3ºE: ver cómo será" aria-expanded="{{sceneExpanded}}" onMouseEnter="{{showScene}}" onMouseLeave="{{hideScene}}" onFocus="{{showScene}}" onBlur="{{hideScene}}" onClick="{{toggleScene}}" style="{{w.style}}">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{w.iconColor}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
-                </button>
-              </sc-if>
-              <sc-if value="{{w.plain}}" hint-placeholder-val="{{ true }}">
-                <span style="{{w.style}}"></span>
-              </sc-if>
-            </sc-for>
-          </div>
-        </sc-for>
-        <div style="{{levelStyle}}"></div>
-        <div style="{{oursStyle}}">
-          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: {{accent}}; color: #08110E; font-size: 12px; font-weight: 700; box-shadow: 0 0 16px {{glow}}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#08110E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
-            Nuestro 3ºE
-          </span>
-          <span style="width: 14px; height: 2px; background: {{accent}}"></span>
-        </div>
-        <!-- Mini escena del 3ºE -->
-        <sc-if value="{{sceneOpen}}" hint-placeholder-val="{{ false }}">
-          <div class="scene" role="dialog" aria-label="Así será el 3ºE" style="{{sceneStyle}}">
-            <svg width="248" height="140" viewBox="0 0 248 140" role="img" aria-label="Salón con sofá, lámpara, planta y ventana" style="display: block; border-radius: 10px">
-              <rect x="0" y="0" width="248" height="140" fill="#22362E"></rect>
-              <rect x="0" y="104" width="248" height="36" fill="#3B2C22"></rect>
-              <path d="M0 104h248" stroke="#4E3A2C" stroke-width="2"></path>
-              <rect x="18" y="16" width="64" height="58" rx="3" fill="{{sceneSky}}"></rect>
-              <sc-if value="{{sceneIsNight}}" hint-placeholder-val="{{ true }}">
-                <circle cx="64" cy="32" r="7" fill="#EEF2DC"></circle>
-                <circle cx="30" cy="26" r="1.2" fill="#FFFFFF"></circle>
-                <circle cx="44" cy="44" r="1" fill="#FFFFFF"></circle>
-                <circle cx="72" cy="56" r="1" fill="#FFFFFF"></circle>
-              </sc-if>
-              <sc-if value="{{sceneIsDay}}" hint-placeholder-val="{{ false }}">
-                <circle cx="62" cy="34" r="9" fill="#FFE7A6"></circle>
-                <path d="M24 60h22a6 6 0 0 0-11-4 5 5 0 0 0-11 4Z" fill="#FFFFFF" opacity=".85"></path>
-              </sc-if>
-              <path d="M18 64h64" stroke="#0F1D18" stroke-width="2" opacity=".4"></path>
-              <rect x="18" y="16" width="64" height="58" rx="3" fill="none" stroke="#E8F2EC" stroke-width="3"></rect>
-              <path d="M50 16v58M18 45h64" stroke="#E8F2EC" stroke-width="2"></path>
-              <rect x="150" y="22" width="40" height="30" rx="2" fill="#0F1D18" stroke="#C9A85A" stroke-width="2"></rect>
-              <path d="M156 46l9-10 7 7 5-4 8 7" stroke="#3BE58A" stroke-width="2" fill="none" stroke-linejoin="round"></path>
-              <ellipse cx="148" cy="124" rx="78" ry="9" fill="#5B3B2E" opacity=".7"></ellipse>
-              <rect x="104" y="70" width="96" height="22" rx="8" fill="#D9774F"></rect>
-              <rect x="98" y="84" width="108" height="24" rx="8" fill="#C4623D"></rect>
-              <rect x="94" y="78" width="14" height="30" rx="6" fill="#B3552F"></rect>
-              <rect x="196" y="78" width="14" height="30" rx="6" fill="#B3552F"></rect>
-              <rect x="114" y="74" width="26" height="16" rx="5" fill="#FFD27A"></rect>
-              <rect x="104" y="108" width="4" height="8" fill="#2A1C14"></rect>
-              <rect x="196" y="108" width="4" height="8" fill="#2A1C14"></rect>
-              <path d="M226 116V52" stroke="#C9A85A" stroke-width="2"></path>
-              <path d="M214 52h24l-5-14h-14Z" fill="#FFD27A"></path>
-              <circle cx="226" cy="60" r="22" fill="#FFD27A" opacity=".16"></circle>
-              <path d="M218 116h16" stroke="#C9A85A" stroke-width="3" stroke-linecap="round"></path>
-              <path d="M36 104h20l-3 16H39Z" fill="#B3552F"></path>
-              <path d="M46 104c-2-12-12-16-16-26 8 2 14 8 16 16 0-12 4-20 12-26-2 10-6 18-8 26" fill="#3BE58A"></path>
-              <path d="M46 104c4-10 12-12 18-16-4 8-10 12-14 16" fill="#2CB56B"></path>
-            </svg>
-            <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 4px 2px">
-              <strong style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em">Aquí viviremos</strong>
-              <span style="font-size: 13px; color: #B9CCC2">3ºE · faltan {{days}} días para estrenarlo</span>
-            </div>
-          </div>
-        </sc-if>
-      </div>
-      <!-- arrecife sobre el que se apoya el edificio -->
-      <div data-reef="1" style="flex: none; display: flex; flex-direction: column; margin: 0 -40px; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%); mask-image: linear-gradient(to bottom, #000 40%, transparent 100%)">
-      <svg width="300" height="97" viewBox="0 0 340 110" role="img" aria-label="Arrecife con corales bajo el edificio" style="flex: none; display: block; overflow: visible">
-        <path d="M0 110 C6 66 20 30 40 8 Q46 2 56 2 L284 2 Q294 2 300 8 C320 30 334 66 340 110 Z" fill="#13231E"></path>
-        <path d="M40 8 Q46 2 56 2 L284 2 Q294 2 300 8" fill="none" stroke="#2A4238" stroke-width="2"></path>
-        <ellipse cx="110" cy="34" rx="18" ry="6" fill="#1B2F28"></ellipse>
-        <ellipse cx="214" cy="46" rx="24" ry="7" fill="#1B2F28"></ellipse>
-        <ellipse cx="162" cy="22" rx="12" ry="4" fill="#1B2F28"></ellipse>
-        <ellipse cx="270" cy="30" rx="10" ry="4" fill="#1B2F28"></ellipse>
-        <g style="transform-box: fill-box; transform-origin: 50% 100%; animation: sway 5s ease-in-out infinite">
-          <path d="M34 92 V66 M34 78 L22 64 M34 72 L46 56 M22 64 L18 52 M46 56 L50 44 M28 70 L24 60" fill="none" stroke="#FF6B8B" stroke-width="4" stroke-linecap="round"></path>
-        </g>
-        <g style="transform-box: fill-box; transform-origin: 50% 100%; animation: sway 6.5s ease-in-out -2s infinite">
-          <path d="M306 96 C288 76 292 52 306 46 C320 52 326 76 306 96 Z" fill="#FF9F6B" opacity=".85"></path>
-          <path d="M306 94 V50 M306 74 L296 60 M306 74 L316 60 M306 84 L294 74 M306 84 L318 74" fill="none" stroke="#B3552F" stroke-width="1.5" stroke-linecap="round"></path>
-        </g>
-        <g style="transform-box: fill-box; transform-origin: 50% 100%; animation: sway 3.5s ease-in-out -1s infinite">
-          <path d="M84 96 C82 84 86 74 82 62 M92 96 C94 82 90 72 96 60 M100 96 C98 86 102 78 100 68" fill="none" stroke="#3BE58A" stroke-width="3" stroke-linecap="round" opacity=".8"></path>
-        </g>
-        <g style="transform-box: fill-box; transform-origin: 50% 100%; animation: sway 4s ease-in-out -0.5s infinite">
-          <path d="M246 96 C240 86 238 80 236 72 M250 96 C250 86 250 78 250 70 M254 96 C260 86 262 80 264 72 M248 96 C244 88 242 84 240 80 M252 96 C256 88 258 84 260 80" fill="none" stroke="#C49BFF" stroke-width="2.5" stroke-linecap="round"></path>
-          <circle cx="250" cy="96" r="6" fill="#9C72E0"></circle>
-        </g>
-        <g style="transform-box: fill-box; transform-origin: 50% 100%; animation: sway 4.8s ease-in-out -3s infinite">
-          <path d="M172 92 C168 80 172 70 168 58 M178 92 C182 80 178 72 184 62" fill="none" stroke="#2CB56B" stroke-width="3" stroke-linecap="round" opacity=".75"></path>
-        </g>
-        <path d="M0 110 C24 84 56 80 86 88 C116 96 140 78 172 84 C206 90 232 76 262 84 C292 92 322 86 340 110 Z" fill="#1D332B"></path>
-        <path d="M136 86 l3.2 6.6 7.2 1 -5.2 5 1.3 7.2 -6.5-3.4 -6.5 3.4 1.3-7.2 -5.2-5 7.2-1 Z" fill="#FFD27A"></path>
-        <circle cx="200" cy="96" r="3" fill="#FF6B8B"></circle>
-        <circle cx="208" cy="100" r="2" fill="#FF9F6B"></circle>
-        <circle cx="60" cy="100" r="2.5" fill="#FFD27A"></circle>
-        <circle cx="288" cy="100" r="2.5" fill="#5CC8FF"></circle>
-      </svg>
-      </div>
-    </div>
-  </figure>
-
-  <!-- Barra de progreso con hitos -->
-  <section aria-label="Progreso por hitos" class="a-bar fade-up" style="padding: 14px 44px 10px; animation-delay: .15s">
-    <div class="bar-in" style="position: relative; height: 92px">
-      <div style="position: absolute; left: 0; right: 0; top: 18px; height: 8px; border-radius: 999px; background: rgba(26,46,38,.9)"></div>
-      <div style="{{barStyle}}"></div>
-      <sc-for list="{{milestones}}" as="m" hint-placeholder-count="7">
-        <div style="{{m.nodeWrap}}">
-          <span class="node" style="{{m.node}}">
+    <!-- Barra de hitos: una línea fina con puntos -->
+    <div class="fade-up" aria-label="Progreso por hitos" style="width: 100%; max-width: 680px; box-sizing: border-box; padding: 0 12px; animation-delay: .2s">
+      <div style="position: relative; height: 66px; --nh: 0px">
+        <div style="position: absolute; left: 0; right: 0; top: 32px; height: 3px; border-radius: 999px; background: rgba(232,242,236,.14)"></div>
+        <div style="{{barStyle}}"></div>
+        <sc-for list="{{milestones}}" as="m" hint-placeholder-count="7">
+          <div style="{{m.nodeWrap}}">
+            <span class="mi" aria-hidden="true" style="display: inline-flex; height: 18px; color: {{m.iconColor}}">
             <sc-if value="{{m.isClip}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path></svg></sc-if>
             <sc-if value="{{m.isDoc}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M8 17c1.5-2 2.5-2 3 0s1.5 1.5 3-1"></path></svg></sc-if>
             <sc-if value="{{m.isPay}}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle><path d="M6 12h.01M18 12h.01"></path></svg></sc-if>
             <sc-if value="{{m.isKey}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"></circle><path d="m10.7 12.3 9.8-9.8"></path><path d="m17 6 3 3"></path><path d="m14.5 8.5 2 2"></path></svg></sc-if>
-          </span>
-          <span class="ms-label" style="font-size: 13px; font-weight: 600; white-space: nowrap; line-height: 1.1; color: {{m.textColor}}; text-shadow: 0 1px 6px rgba(0,0,0,.6)">{{m.name}}</span>
-          <span class="ms-label" style="font-size: 11px; white-space: nowrap; line-height: 1.1; color: #B9CCC2; text-shadow: 0 1px 6px rgba(0,0,0,.6)">{{m.label}}</span>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-
-  <!-- Resumen al volver: lo que ha pasado en el estanque mientras no estabais -->
-  <sc-if value="{{hasAway}}" hint-placeholder-val="{{ false }}">
-    <div class="away" role="status" style="position: absolute; top: 84px; left: 50%; z-index: 9; transform: translateX(-50%); pointer-events: none">
-      <div style="display: flex; align-items: center; gap: 12px; max-width: 560px; padding: 14px 18px; border-radius: 14px; background: rgba(12,24,20,.94); border: 1px solid #FF9F6B; box-shadow: 0 12px 40px rgba(0,0,0,.45); font-size: 15px; animation: toastIn 11s ease-out both">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF9F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z"></path><path d="M18 12v.5"></path><path d="M16 17.93a9.77 9.77 0 0 1 0-11.86"></path><path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33"></path></svg>
-        <span>{{awayMsg}}</span>
+            </span>
+            <span style="{{m.node}}"></span>
+            <span class="{{m.labelClass}}" style="font-size: 11px; font-weight: 600; white-space: nowrap; line-height: 1.1; color: {{m.textColor}}">{{m.name}}</span>
+          </div>
+        </sc-for>
       </div>
     </div>
-  </sc-if>
 
-  <!-- Cartel de celebración (solo el día de un hito) -->
-  <sc-if value="{{party}}" hint-placeholder-val="{{ false }}">
-    <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; pointer-events: none">
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 48px; border-radius: 24px; background: rgba(8,17,14,.8); border: 2px solid #FFD27A; box-shadow: 0 0 60px rgba(255,210,122,.45); animation: partyToast 5.5s ease-out 1s both">
-        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: #FFD27A">Hoy es el día</span>
-        <span class="party-big" style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 96px; font-weight: 900; line-height: 0.9; text-transform: uppercase; color: #FFFFFF; text-shadow: 0 0 30px rgba(255,210,122,.8)">{{partyName}}</span>
+    <!-- Tiempo restante: números sueltos separados por líneas finas -->
+    <div class="cd fade-up" style="width: 100%; max-width: 560px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); animation-delay: .3s">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(40px, 11vw, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums">{{days}}</span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #8FA89B">días</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(40px, 11vw, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums">{{hours}}</span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #8FA89B">horas</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(40px, 11vw, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums">{{mins}}</span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #8FA89B">min</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: clamp(40px, 11vw, 68px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; color: {{accent}}; text-shadow: 0 0 20px {{glow}}">{{secs}}</span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #8FA89B">seg</span>
       </div>
     </div>
-  </sc-if>
+
+    <!-- Hype -->
+    <button type="button" onClick="{{addHype}}" aria-label="Subir el hype" class="fade-up" style="display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 8px; border: 0; background: none; color: #E8F2EC; cursor: pointer; animation-delay: .4s">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="#FF6B8B" aria-hidden="true" style="filter: drop-shadow(0 0 10px rgba(255,107,139,.7)); animation: beat 1.4s ease-in-out infinite"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"></path></svg>
+      <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; line-height: 1">
+        <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 34px; font-weight: 900; color: #FF6B8B; font-variant-numeric: tabular-nums">{{hype}}</span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #FFB3C3">nivel de hype</span>
+      </span>
+    </button>
+  </main>
 
   <!-- Diario de obra -->
   <sc-if value="{{diaryOpen}}" hint-placeholder-val="{{ false }}">

@@ -1,9 +1,8 @@
-// API del piso: hype, estanque (peces) y diario de visitas con fotos.
+// API del piso: hype y diario de visitas con fotos.
 // Todo se guarda en Netlify Blobs (incluido en el plan gratuito).
 //
-//   GET  /api/state            → { hype, fish, now }
+//   GET  /api/state            → { hype, now }
 //   POST /api/hype   { n }      → suma n al contador (máx. 50 por llamada)
-//   POST /api/pond   { fish, since } → guarda el estanque (fusiona con lo que haya)
 //   GET  /api/diary            → { visits: [{ id, date, note, photos: [key] }] }
 //   POST /api/diary  { pin, date, note }        → crea una visita  (requiere PIN)
 //   POST /api/photo  { pin, visitId, data }     → añade una foto JPEG (data URL, requiere PIN)
@@ -15,8 +14,6 @@ import { getStore } from '@netlify/blobs';
 export const config = { path: '/api/*' };
 
 const OLD_HYPE_URL = 'https://api.npoint.io/4a27719f5eef9e8c78f6'; // contador antiguo, para no perderlo
-const MAX_FISH = 60;
-const DAY = 86400000;
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -33,28 +30,6 @@ function checkPin(pin) {
   let diff = 0;
   for (let i = 0; i < pin.length; i++) diff |= pin.charCodeAt(i) ^ expected.charCodeAt(i);
   return diff === 0 ? null : 'PIN incorrecto.';
-}
-
-const num = (v, min, max, def) => (typeof v === 'number' && isFinite(v) ? Math.min(max, Math.max(min, v)) : def);
-
-function cleanFish(f) {
-  if (!f || typeof f !== 'object' || typeof f.id !== 'string' || f.id.length > 40) return null;
-  const col = Array.isArray(f.col) && f.col.length === 3 ? f.col.map((c) => num(c, 0, 255, 128)) : [59, 229, 138];
-  return {
-    id: f.id,
-    name: typeof f.name === 'string' ? f.name.slice(0, 30) : 'Pez',
-    x: num(f.x, -0.1, 1.1, 0.5),
-    d: num(f.d, -1, 1, 0.5),
-    adultS: num(f.adultS, 3, 24, 10),
-    adult: !!f.adult,
-    bornAt: num(f.bornAt, 0, 1e15, Date.now()),
-    fedAt: num(f.fedAt, 0, 1e15, Date.now()),
-    fedLevel: num(f.fedLevel, 0, 1.2, 0.8),
-    breedAt: num(f.breedAt, 0, 1e15, 0),
-    col,
-    dead: !!f.dead,
-    diedAt: f.dead ? num(f.diedAt, 0, 1e15, Date.now()) : undefined
-  };
 }
 
 export default async (req) => {
@@ -77,8 +52,7 @@ export default async (req) => {
         } catch (e) { /* sin contador antiguo */ }
         await store.setJSON('hype', hype);
       }
-      const pond = await store.get('pond', { type: 'json' });
-      return json({ hype: hype.count, fish: pond ? pond.fish : [], now: Date.now() });
+      return json({ hype: hype.count, now: Date.now() });
     }
 
     // ---- hype ----
@@ -88,29 +62,6 @@ export default async (req) => {
       hype.count += add;
       await store.setJSON('hype', hype);
       return json({ hype: hype.count });
-    }
-
-    // ---- estanque ----
-    if (route === 'pond' && req.method === 'POST') {
-      if (!Array.isArray(body.fish)) return json({ error: 'Datos no válidos.' }, 400);
-      const incoming = body.fish.slice(0, MAX_FISH).map(cleanFish).filter(Boolean);
-      const since = num(body.since, 0, 1e15, 0);
-      const current = ((await store.get('pond', { type: 'json' })) || { fish: [] }).fish;
-      const byId = new Map(current.map((f) => [f.id, f]));
-      const merged = incoming.map((f) => {
-        const old = byId.get(f.id);
-        // si alguien le dio de comer después en otro dispositivo, se respeta esa comida
-        if (old && !f.dead && old.fedAt > f.fedAt) return { ...f, fedAt: old.fedAt, fedLevel: old.fedLevel };
-        return f;
-      });
-      // peces que nacieron en otro dispositivo después de que este cargase la página
-      const ids = new Set(merged.map((f) => f.id));
-      for (const f of current) if (!ids.has(f.id) && f.bornAt >= since) merged.push(f);
-      // los muertos se guardan 30 días (para el resumen de "desde vuestra última visita")
-      const now = Date.now();
-      const fish = merged.filter((f) => !f.dead || now - (f.diedAt || now) < 30 * DAY).slice(0, MAX_FISH);
-      await store.setJSON('pond', { fish, updatedAt: now });
-      return json({ ok: true, count: fish.length });
     }
 
     // ---- diario ----
