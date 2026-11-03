@@ -14,6 +14,9 @@ class Component extends DCLogic {
     super(props);
     this.state = { now: Date.now(), hype: 109, intro: 0, diary: false, scene: false, visits: [], form: false, draftDate: '', draftNote: '', draftPhotos: [], draftPin: '', saving: false, formError: '', draftVisitId: null, uploadDone: 0, uploadTotal: 0, photo: null, photoList: [], photoIdx: 0 };
     this.setCanvas = (el) => { if (el) this.canvas = el; };
+    this.setPvImg = (el) => { this.pvImg = el; };
+    this.zoom = { s: 1, x: 0, y: 0 };
+    this.ptrs = new Map();
     this.hearts = [];
     this.server = null;
   }
@@ -69,12 +72,95 @@ class Component extends DCLogic {
   }
   clockDate() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   // ---- visor de fotos ----
-  openPhotos(list, i) { this.setState({ photoList: list, photoIdx: i, photo: list[i] }); }
+  openPhotos(list, i) { this.resetZoom(); this.setState({ photoList: list, photoIdx: i, photo: list[i] }); }
   stepPhoto(d) {
     const list = this.state.photoList || [];
     if (list.length < 2) return;
     const i = (this.state.photoIdx + d + list.length) % list.length;
+    this.resetZoom();
     this.setState({ photoIdx: i, photo: list[i] });
+  }
+  // ---- zoom del visor: pellizcar, doble toque / doble clic y rueda; con zoom se arrastra para mover la foto ----
+  resetZoom() { this.zoom = { s: 1, x: 0, y: 0 }; this.ptrs.clear(); this.g = null; this.applyZoom(false); }
+  applyZoom(animate) {
+    const im = this.pvImg, z = this.zoom;
+    if (!im) return;
+    im.style.transition = animate ? 'transform .2s ease' : 'none';
+    im.style.transform = z.s > 1 ? 'translate(' + z.x + 'px, ' + z.y + 'px) scale(' + z.s + ')' : '';
+    im.style.cursor = z.s > 1 ? 'grab' : '';
+  }
+  // cambia la escala a s dejando quieto bajo (px, py) el punto de la foto que hay ahí
+  zoomAt(s, px, py, animate) {
+    const im = this.pvImg, z = this.zoom;
+    if (!im || !im.offsetParent) return;
+    const pr = im.offsetParent.getBoundingClientRect();
+    const cx = pr.left + im.offsetLeft + im.offsetWidth / 2, cy = pr.top + im.offsetTop + im.offsetHeight / 2; // centro sin transformar
+    s = Math.max(1, Math.min(4, s));
+    const qx = (px - cx - z.x) / z.s, qy = (py - cy - z.y) / z.s;
+    z.x = px - cx - s * qx; z.y = py - cy - s * qy; z.s = s;
+    this.clampZoom();
+    this.applyZoom(animate);
+  }
+  // sin zoom la foto vuelve a su sitio; con zoom no se puede sacar de sus bordes
+  clampZoom() {
+    const im = this.pvImg, z = this.zoom;
+    if (z.s <= 1.01) { z.s = 1; z.x = 0; z.y = 0; return; }
+    const mx = (z.s - 1) * im.offsetWidth / 2, my = (z.s - 1) * im.offsetHeight / 2;
+    z.x = Math.max(-mx, Math.min(mx, z.x)); z.y = Math.max(-my, Math.min(my, z.y));
+  }
+  toggleZoom(px, py) {
+    if (this.zoom.s > 1) { this.zoom = { s: 1, x: 0, y: 0 }; this.applyZoom(true); } else this.zoomAt(2.5, px, py, true);
+  }
+  // empieza (o reinicia) un gesto con los dedos que haya en pantalla
+  gestureStart() {
+    const p = [...this.ptrs.values()], z = this.zoom;
+    this.g = { s: z.s, x: z.x, y: z.y, p0: { ...p[0] }, pinch: p.length >= 2, moved: false };
+    if (p.length >= 2) {
+      this.g.d = Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y) || 1;
+      this.g.mx = (p[0].x + p[1].x) / 2; this.g.my = (p[0].y + p[1].y) / 2;
+    }
+  }
+  pvDown(e) {
+    if (e.target.closest && e.target.closest('button')) return; // flechas y cerrar van aparte
+    if (e.pointerType === 'touch') this.lastTouchAt = Date.now();
+    this.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    this.gestureStart();
+  }
+  pvMove(e) {
+    const pt = this.ptrs.get(e.pointerId), g = this.g, z = this.zoom;
+    if (!pt || !g) return;
+    pt.x = e.clientX; pt.y = e.clientY;
+    const p = [...this.ptrs.values()];
+    if (p.length >= 2) {
+      // pellizco: escala con la distancia entre dedos y se mueve con su punto medio
+      const d = Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y) || 1;
+      const mx = (p[0].x + p[1].x) / 2, my = (p[0].y + p[1].y) / 2;
+      z.s = g.s; z.x = g.x + mx - g.mx; z.y = g.y + my - g.my;
+      this.zoomAt(g.s * d / g.d, mx, my, false);
+      g.moved = true;
+      return;
+    }
+    const dx = p[0].x - g.p0.x, dy = p[0].y - g.p0.y;
+    if (Math.hypot(dx, dy) > 8) g.moved = true;
+    if (z.s > 1) { z.x = g.x + dx; z.y = g.y + dy; this.clampZoom(); this.applyZoom(false); }
+  }
+  pvUp(e) {
+    if (!this.ptrs.has(e.pointerId)) return;
+    const g = this.g;
+    this.ptrs.delete(e.pointerId);
+    if (this.ptrs.size) { this.gestureStart(); this.g.pinch = true; return; } // queda un dedo: sigue desde ahí
+    this.g = null;
+    if (!g) return;
+    if (g.pinch) { this.swipeAt = Date.now(); return; } // tras pellizcar no se cierra ni cambia de foto
+    const dx = e.clientX - g.p0.x, dy = e.clientY - g.p0.y;
+    if (this.zoom.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) { this.swipeAt = Date.now(); this.stepPhoto(dx < 0 ? 1 : -1); return; }
+    if (g.moved) { this.swipeAt = Date.now(); return; }
+    // doble toque sobre la foto: amplía o vuelve al tamaño normal
+    if (e.pointerType === 'touch' && e.target === this.pvImg) {
+      const now = Date.now(), lt = this.lastTap;
+      if (lt && now - lt.t < 320 && Math.hypot(e.clientX - lt.x, e.clientY - lt.y) < 30) { this.lastTap = null; this.toggleZoom(e.clientX, e.clientY); }
+      else this.lastTap = { t: now, x: e.clientX, y: e.clientY };
+    }
   }
 
   // ---------- Agua que sube con el porcentaje ----------
@@ -435,14 +521,18 @@ class Component extends DCLogic {
       photoCounter: photoList.length > 1 ? (this.state.photoIdx + 1) + ' de ' + photoList.length : 'Foto de la visita',
       prevPhoto: (e) => { if (e) e.stopPropagation(); this.stepPhoto(-1); },
       nextPhoto: (e) => { if (e) e.stopPropagation(); this.stepPhoto(1); },
-      photoTouchStart: (e) => { const t = e.touches && e.touches[0]; if (t) { this.tx = t.clientX; this.ty = t.clientY; } },
-      photoTouchEnd: (e) => {
-        const t = e.changedTouches && e.changedTouches[0];
-        if (!t || this.tx == null) return;
-        const dx = t.clientX - this.tx, dy = t.clientY - this.ty;
-        this.tx = null;
-        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) { this.swipeAt = Date.now(); this.stepPhoto(dx < 0 ? 1 : -1); }
+      // gestos del visor (dedo y ratón): deslizar para cambiar de foto, pellizcar y arrastrar con zoom
+      setPvImg: this.setPvImg,
+      photoDown: (e) => this.pvDown(e),
+      photoMove: (e) => this.pvMove(e),
+      photoUp: (e) => this.pvUp(e),
+      photoWheel: (e) => { e.preventDefault(); this.zoomAt(this.zoom.s * Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY, false); },
+      photoDblClick: (e) => {
+        e.stopPropagation();
+        if (Date.now() - (this.lastTouchAt || 0) < 600) return; // en el móvil el doble toque ya se gestiona aparte
+        this.toggleZoom(e.clientX, e.clientY);
       },
+      photoImgClick: (e) => e.stopPropagation(), // tocar la foto no cierra el visor (sí el fondo o la ✕)
       hype: String(this.state.hype),
       addHype: () => {
         this.setState({ hype: this.state.hype + 1 });

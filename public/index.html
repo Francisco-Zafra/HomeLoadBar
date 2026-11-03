@@ -72,8 +72,8 @@ a{color:#3BE58A}a:hover{color:#8CF5BB}
 .df-done{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,17,14,.45)}
 .df-prog{display:flex;flex-direction:column;gap:6px}
 .df-prog-track{height:8px;border-radius:999px;background:rgba(232,242,236,.1);overflow:hidden}
-.pv{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:56px 12px;box-sizing:border-box;background:rgba(3,8,6,.94);cursor:zoom-out;animation:popIn .2s ease-out both;touch-action:pan-y}
-.pv img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.6);user-select:none;-webkit-user-drag:none}
+.pv{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:56px 12px;box-sizing:border-box;background:rgba(3,8,6,.94);cursor:zoom-out;animation:popIn .2s ease-out both;touch-action:none}
+.pv img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.6);user-select:none;-webkit-user-drag:none;cursor:zoom-in;will-change:transform}
 .pv-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;padding:0;border:1px solid #24443A;border-radius:50%;background:rgba(10,22,18,.7);color:#E8F2EC;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .pv-count{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(10,22,18,.8);font-size:13px;font-weight:600;letter-spacing:.04em}
 @media (max-width:640px){.pv-nav{width:44px;height:44px}.pv-prev{left:8px!important}.pv-next{right:8px!important}}
@@ -328,10 +328,10 @@ a{color:#3BE58A}a:hover{color:#8CF5BB}
           </sc-for>
         </div>
       </aside>
-      <!-- Foto en grande: se cierra tocando en cualquier sitio; flechas o deslizar para cambiar -->
+      <!-- Foto en grande: se cierra tocando el fondo o la ✕; flechas o deslizar para cambiar; pellizcar, doble toque o rueda para ampliar -->
       <sc-if value="{{photoOpen}}" hint-placeholder-val="{{ false }}">
-        <div class="pv" role="dialog" aria-label="Foto de la visita" onClick="{{closePhoto}}" onTouchStart="{{photoTouchStart}}" onTouchEnd="{{photoTouchEnd}}">
-          <img src="{{photoUrl}}" alt="{{photoCounter}}">
+        <div class="pv" role="dialog" aria-label="Foto de la visita" onClick="{{closePhoto}}" onPointerDown="{{photoDown}}" onPointerMove="{{photoMove}}" onPointerUp="{{photoUp}}" onPointerCancel="{{photoUp}}" onWheel="{{photoWheel}}">
+          <img src="{{photoUrl}}" alt="{{photoCounter}}" ref="{{setPvImg}}" draggable="false" onClick="{{photoImgClick}}" onDblClick="{{photoDblClick}}">
           <button type="button" class="hdr-btn" aria-label="Cerrar la foto" onClick="{{closePhoto}}" style="position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 44px; padding: 0; justify-content: center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
           </button>
