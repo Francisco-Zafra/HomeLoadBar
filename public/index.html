@@ -15,6 +15,12 @@ a{color:#3BE58A}a:hover{color:#8CF5BB}
 .a-head,.a-hero,.a-bldg,.a-bar{position:relative;z-index:1}
 .a-head{grid-area:head;z-index:3}.a-hero{grid-area:hero}.a-bldg{grid-area:bldg;z-index:2}.a-bar{grid-area:bar}
 @media (max-width:1000px){body{overflow:auto}.shell{height:auto;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "hero" "bar" "bldg"}.a-bldg{height:620px}.ms-label{display:none}}
+/* Pantallas grandes (27"): el bloque del contador se centra en su columna y crece un poco */
+@media (min-width:1700px){
+.a-hero>*{width:min(100%,1040px);margin-left:auto;margin-right:auto;box-sizing:border-box}
+.pct{font-size:clamp(96px,24vh,330px)!important}
+.cd{max-width:none!important}
+}
 /* Móvil: todo cabe en una pantalla, sin scroll */
 @media (max-width:700px){
 body{overflow:hidden}
