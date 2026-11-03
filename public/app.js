@@ -347,17 +347,6 @@ class Component extends DCLogic {
       if (this.levelNow != null && Math.abs(mouse.y - this.levelNow) < 36 && T - lastRip > 0.12) { ripples.push({ x: mouse.x, t: T, A: 4 }); lastRip = T; }
     };
     window.addEventListener('pointermove', this.onMove);
-    // Inclinación del móvil: el agua se mantiene horizontal respecto al suelo real
-    let tiltTarget = 0, tilt = 0;
-    this.onTilt = (e) => { if (e.gamma == null) return; tiltTarget = Math.max(-25, Math.min(25, e.gamma)) * Math.PI / 180; };
-    window.addEventListener('deviceorientation', this.onTilt);
-    // iPhone pide permiso para el giroscopio: se solicita con el primer toque en la pantalla
-    this.askTilt = () => {
-      const D = window.DeviceOrientationEvent;
-      if (D && typeof D.requestPermission === 'function') D.requestPermission().catch(() => {});
-      window.removeEventListener('pointerdown', this.askTilt);
-    };
-    window.addEventListener('pointerdown', this.askTilt);
     const drawFish = (x, y, s, dir, ph, col, a, ang, happy) => {
       ctx.save(); ctx.translate(x, y); ctx.rotate(ang || 0); ctx.scale(dir, 1);
       ctx.fillStyle = 'rgba(' + col[0] + ',' + col[1] + ',' + col[2] + ',' + a + ')';
@@ -396,7 +385,6 @@ class Component extends DCLogic {
       if (!reduce) T += dts;
       simClock += dt * (this.props.velocidad === 'rapida' ? 1440 : 1);
       mouse.v = (mouse.v || 0) * 0.9;
-      tilt += (tiltTarget - tilt) * Math.min(1, dts * 3);
       const party = !!this.partyNow;
       const sky = this.skyNow || { day: 0, tw: 0, u: -1, v: 0.5 };
       const hex = (this.props.accent ?? '#3BE58A').replace('#', '');
@@ -506,17 +494,16 @@ class Component extends DCLogic {
       }
       if (p > 0.002 && W > 0) {
         const level = H * (1 - p);
-        const tiltY = (x) => -Math.tan(tilt) * (x - W / 2);
         const amp = Math.min(1, (H - level) / 60) * (party ? 1.25 : 1);
         const step = 6;
         // capa de fondo (olas lejanas)
         ctx.beginPath(); ctx.moveTo(0, H);
-        for (let x = 0; x <= W + step; x += step) ctx.lineTo(x, level - 9 + surf(x * 1.35 + 400, T * 0.7, 0.75 * amp, 2) + tiltY(x));
+        for (let x = 0; x <= W + step; x += step) ctx.lineTo(x, level - 9 + surf(x * 1.35 + 400, T * 0.7, 0.75 * amp, 2));
         ctx.lineTo(W, H); ctx.closePath();
         ctx.fillStyle = c(0.07); ctx.fill();
         // cuerpo principal
         const pts = [];
-        for (let x = 0; x <= W + step; x += step) pts.push([x, level + surf(x, T, amp, 0) + rip(x) + tiltY(x)]);
+        for (let x = 0; x <= W + step; x += step) pts.push([x, level + surf(x, T, amp, 0) + rip(x)]);
         this.levelNow = level;
         const body = new Path2D();
         body.moveTo(0, H);
@@ -766,19 +753,19 @@ class Component extends DCLogic {
           const s = surf(x, T, amp, 0) + rip(x);
           const crest = Math.max(0, Math.min(1, -s / (14 * amp + 0.01) + 0.35));
           if (crest < 0.15) continue;
-          const y = level + s + tiltY(x) + f.d * (1.2 - crest) + Math.sin(T * 2.2 + f.ph) * 1.2;
+          const y = level + s + f.d * (1.2 - crest) + Math.sin(T * 2.2 + f.ph) * 1.2;
           ctx.beginPath(); ctx.arc(x, y, f.s * (0.5 + crest), 0, 6.2832);
           ctx.fillStyle = 'rgba(240,255,248,' + (0.1 + 0.55 * crest) * (1 - f.d / 16) + ')'; ctx.fill();
         }
         for (let i = 0; i < pts.length; i += 9) {
-          const s = pts[i][1] - level - tiltY(pts[i][0]);
+          const s = pts[i][1] - level;
           if (s < -13 * amp) {
             const tw = 0.5 + 0.5 * Math.sin(T * 6 + i);
             ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1] + 1, 1.4, 0, 6.2832);
             ctx.fillStyle = 'rgba(255,255,255,' + 0.7 * tw + ')'; ctx.fill();
           }
         }
-        const surfAt = (x) => level + surf(x, T, amp, 0) + rip(x) + tiltY(x);
+        const surfAt = (x) => level + surf(x, T, amp, 0) + rip(x);
         // el agua baña el edificio: capa translúcida delante de la fachada, reflejos de ventanas y espuma
         const bR = this.bRect;
         if (bR && bR.w > 0) {
@@ -999,8 +986,6 @@ class Component extends DCLogic {
     cancelAnimationFrame(this.wraf);
     if (this.onResize) window.removeEventListener('resize', this.onResize);
     if (this.onMove) window.removeEventListener('pointermove', this.onMove);
-    if (this.onTilt) window.removeEventListener('deviceorientation', this.onTilt);
-    if (this.askTilt) window.removeEventListener('pointerdown', this.askTilt);
     if (this.ac) this.ac.close();
   }
 
