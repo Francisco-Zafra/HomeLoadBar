@@ -1079,7 +1079,10 @@ class Component extends DCLogic {
         ago: ago <= 0 ? 'Hoy' : ago === 1 ? 'Ayer' : 'Hace ' + ago + ' días',
         pctAt: (vp * 100).toFixed(1).replace('.', ',') + '%',
         note: v.note, hasNote: !!v.note,
-        photos: (v.photos || []).map((k) => ({ url: '/api/photo?key=' + encodeURIComponent(k) })), hasPhotos: (v.photos || []).length > 0,
+        photos: (v.photos || []).map((k) => {
+          const url = '/api/photo?key=' + encodeURIComponent(k);
+          return { url, open: () => this.setState({ photo: url }) };
+        }), hasPhotos: (v.photos || []).length > 0,
         grid: 'display: grid; grid-template-columns: repeat(' + Math.min(3, Math.max(1, (v.photos || []).length)) + ', minmax(0, 1fr)); gap: 6px;'
       };
     });
@@ -1191,7 +1194,11 @@ class Component extends DCLogic {
       },
       diaryOpen: this.state.diary,
       openDiary: () => this.setState({ diary: true }),
-      closeDiary: () => this.setState({ diary: false }),
+      closeDiary: () => this.setState({ diary: false, photo: null }),
+      // foto del diario a pantalla completa
+      photoOpen: !!this.state.photo,
+      photoUrl: this.state.photo,
+      closePhoto: () => this.setState({ photo: null }),
       sound: this.state.sound,
       muted: !this.state.sound,
       soundPressed: this.state.sound ? 'true' : 'false',
