@@ -12,7 +12,7 @@ async function api(route, body) {
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { now: Date.now(), hype: 109, intro: 0, diary: false, scene: false, visits: [], form: false, draftDate: '', draftNote: '', draftPhotos: [], draftPin: '', saving: false, formError: '' };
+    this.state = { now: Date.now(), hype: 109, intro: 0, diary: false, scene: false, visits: [], form: false, draftDate: '', draftNote: '', draftPhotos: [], draftPin: '', saving: false, formError: '', draftVisitId: null, uploadDone: 0, uploadTotal: 0, photo: null, photoList: [], photoIdx: 0 };
     this.setCanvas = (el) => { if (el) this.canvas = el; };
     this.hearts = [];
     this.server = null;
@@ -40,23 +40,41 @@ class Component extends DCLogic {
       return c.toDataURL('image/jpeg', 0.82);
     } finally { URL.revokeObjectURL(url); }
   }
+  // Guarda la visita y sube sus fotos. Si algo falla a mitad, al volver a pulsar "Guardar"
+  // se reutiliza la visita ya creada (draftVisitId) y solo se suben las fotos que faltan.
   async submitVisit() {
     const pin = (this.state.draftPin || '').trim();
     if (!pin) { this.setState({ formError: 'Escribe el PIN del diario.' }); return; }
-    this.setState({ saving: true, formError: '' });
+    const pending = this.state.draftPhotos.filter((p) => !p.done);
+    this.setState({ saving: true, formError: '', uploadDone: this.state.draftPhotos.length - pending.length, uploadTotal: this.state.draftPhotos.length });
     try {
-      const { id } = await api('diary', { pin, date: this.state.draftDate, note: this.state.draftNote.trim() });
-      const photos = this.state.draftPhotos;
-      for (let i = 0; i < photos.length; i++) {
-        this.setState({ formError: 'Subiendo fotos… ' + (i + 1) + ' de ' + photos.length });
-        await api('photo', { pin, visitId: id, data: await this.shrink(photos[i].file) });
+      let id = this.state.draftVisitId;
+      if (!id) {
+        id = (await api('diary', { pin, date: this.state.draftDate, note: this.state.draftNote.trim() })).id;
+        this.setState({ draftVisitId: id });
+      }
+      for (const ph of pending) {
+        await api('photo', { pin, visitId: id, data: await this.shrink(ph.file) });
+        ph.done = true; // queda marcada como subida aunque falle una posterior
+        this.setState({ uploadDone: this.state.uploadDone + 1, draftPhotos: this.state.draftPhotos.slice() });
       }
       try { localStorage.setItem('piso-pin', pin); } catch (e) {}
       await this.loadVisits();
-      this.setState({ form: false, draftPhotos: [], saving: false, formError: '' });
+      this.state.draftPhotos.forEach((p) => URL.revokeObjectURL(p.url));
+      this.setState({ form: false, draftPhotos: [], draftVisitId: null, saving: false, formError: '', uploadTotal: 0, uploadDone: 0 });
     } catch (e) {
-      this.setState({ saving: false, formError: e.message || 'No se ha podido guardar.' });
+      const msg = e.message || 'No se ha podido guardar.';
+      this.setState({ saving: false, formError: this.state.draftVisitId ? msg + ' Pulsa "Reintentar" para subir las fotos que faltan.' : msg });
     }
+  }
+  clockDate() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  // ---- visor de fotos ----
+  openPhotos(list, i) { this.setState({ photoList: list, photoIdx: i, photo: list[i] }); }
+  stepPhoto(d) {
+    const list = this.state.photoList || [];
+    if (list.length < 2) return;
+    const i = (this.state.photoIdx + d + list.length) % list.length;
+    this.setState({ photoIdx: i, photo: list[i] });
   }
 
   // ---------- Agua que sube con el porcentaje ----------
@@ -283,25 +301,61 @@ class Component extends DCLogic {
     const nextDays = next ? Math.ceil((new Date(next.date + 'T00:00:00').getTime() - now) / 86400000) : 0;
 
 
-    // Diario de obra: visitas libres al piso (fecha, fotos y notas)
-    const visits = (this.state.visits || []).slice().sort((a, b) => (a.date === b.date ? (b.createdAt || 0) - (a.createdAt || 0) : a.date < b.date ? 1 : -1)).map((v) => {
-      const t = new Date(v.date + 'T12:00:00').getTime();
-      const ago = Math.round((now - t) / 86400000);
-      const vp = Math.max(0, Math.min(1, (t - START) / (END - START)));
-      const ph = (v.photos || []).map((k) => {
-        const url = typeof k === 'string' ? '/api/photo?key=' + encodeURIComponent(k) : k.url;
-        return { url, open: () => this.setState({ photo: url }) };
-      });
-      const d = new Date(v.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    // Diario de obra: línea de tiempo de visitas agrupadas por mes (la más reciente arriba)
+    const pctOf = (date) => Math.max(0, Math.min(1, (new Date(date + 'T12:00:00').getTime() - START) / (END - START))) * 100;
+    const fmtPct = (x) => x.toFixed(1).replace('.', ',') + '%';
+    const sorted = (this.state.visits || []).slice().sort((a, b) => (a.date === b.date ? (b.createdAt || 0) - (a.createdAt || 0) : a.date < b.date ? 1 : -1));
+    let photoTotal = 0;
+    const visits = sorted.map((v, idx) => {
+      const t = new Date(v.date + 'T12:00:00');
+      const ago = Math.round((now - t.getTime()) / 86400000);
+      const pct = pctOf(v.date);
+      const older = sorted[idx + 1];
+      const delta = older ? pct - pctOf(older.date) : 0;
+      const urls = (v.photos || []).map((k) => (typeof k === 'string' ? '/api/photo?key=' + encodeURIComponent(k) : k.url));
+      photoTotal += urls.length;
+      const d = t.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
       return {
+        month: t.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+        day: String(t.getDate()),
+        wd: t.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''),
+        dateStyle: idx === 0 ? 'border-color: ' + accent + '; box-shadow: 0 0 16px ' + tint(0.25) + ';' : '',
         dateLabel: d.charAt(0).toUpperCase() + d.slice(1),
         ago: ago <= 0 ? 'Hoy' : ago === 1 ? 'Ayer' : 'Hace ' + ago + ' días',
-        pctAt: (vp * 100).toFixed(1).replace('.', ',') + '%',
+        pctAt: fmtPct(pct),
+        pctAria: 'La obra iba al ' + fmtPct(pct),
+        pctBar: 'height: 100%; width: ' + pct.toFixed(1) + '%; border-radius: 999px; background: ' + accent + '; box-shadow: 0 0 8px ' + tint(0.6) + ';',
+        hasDelta: delta >= 0.05,
+        delta: '+' + fmtPct(delta),
         note: v.note, hasNote: !!v.note,
-        photos: ph, hasPhotos: ph.length > 0,
-        grid: 'display: grid; grid-template-columns: repeat(' + Math.min(3, Math.max(1, ph.length)) + ', minmax(0, 1fr)); gap: 6px;'
+        hasPhotos: urls.length > 0,
+        first: urls[0] || '',
+        heroLabel: 'Ver las fotos de esta visita (' + urls.length + ')',
+        openFirst: () => this.openPhotos(urls, 0),
+        hasMore: urls.length > 1,
+        photoCount: urls.length + ' fotos',
+        thumbs: urls.slice(1).map((url, k) => ({ url, open: () => this.openPhotos(urls, k + 1) }))
       };
     });
+    const groups = [];
+    visits.forEach((v) => {
+      let g = groups[groups.length - 1];
+      if (!g || g.key !== v.month) {
+        g = { key: v.month, label: v.month.charAt(0).toUpperCase() + v.month.slice(1), visits: [] };
+        groups.push(g);
+      }
+      g.visits.push(v);
+    });
+    groups.forEach((g) => { g.countLabel = g.visits.length === 1 ? '1 visita' : g.visits.length + ' visitas'; });
+    const draftPhotosView = this.state.draftPhotos.map((ph, k) => ({
+      ...ph,
+      canRemove: !ph.done && !this.state.saving,
+      remove: () => {
+        URL.revokeObjectURL(ph.url);
+        this.setState({ draftPhotos: this.state.draftPhotos.filter((_, n) => n !== k) });
+      }
+    }));
+    const photoList = this.state.photoList || [];
 
     return {
       accent,
@@ -316,12 +370,27 @@ class Component extends DCLogic {
       nextName: next ? next.name : '¡Ya es nuestro!',
       nextIn: next ? 'faltan ' + nextDays + ' días' : 'a disfrutarlo',
       milestones,
-      visits,
-      noVisits: visits.length === 0,
+      groups,
+      hasVisits: visits.length > 0,
+      diaryStats: (visits.length === 1 ? '1 visita' : visits.length + ' visitas') + ' · ' + (photoTotal === 1 ? '1 foto' : photoTotal + ' fotos'),
+      showCta: !this.state.form,
+      showEmpty: visits.length === 0 && !this.state.form,
       formOpen: this.state.form,
       formClosed: !this.state.form,
-      openForm: () => this.setState({ form: true, draftDate: new Date().toISOString().slice(0, 10), draftNote: '', draftPhotos: [], formError: '' }),
-      cancelForm: () => this.setState({ form: false }),
+      openForm: () => this.setState({ form: true, draftDate: this.clockDate(), draftNote: '', draftPhotos: [], draftVisitId: null, formError: '', uploadDone: 0, uploadTotal: 0 }),
+      cancelForm: () => {
+        if (this.state.saving) return;
+        this.state.draftPhotos.forEach((p) => URL.revokeObjectURL(p.url));
+        if (this.state.draftVisitId) this.loadVisits(); // la visita ya creada aparece con las fotos que llegaron a subirse
+        this.setState({ form: false, draftPhotos: [], draftVisitId: null, formError: '' });
+      },
+      resuming: !!this.state.draftVisitId,
+      draftCount: this.state.draftPhotos.length + ' de 12',
+      draftPhotosView,
+      uploading: this.state.saving && this.state.uploadTotal > 0,
+      uploadDone: this.state.uploadDone,
+      uploadTotal: this.state.uploadTotal,
+      uploadBar: 'height: 100%; border-radius: 999px; background: ' + accent + '; box-shadow: 0 0 10px ' + tint(0.6) + '; transition: width .35s ease; width: ' + (this.state.uploadTotal ? Math.round(100 * Math.max(0.04, this.state.uploadDone / this.state.uploadTotal)) : 0) + '%;',
       draftDate: this.state.draftDate,
       draftNote: this.state.draftNote,
       draftPin: this.state.draftPin || '',
@@ -338,7 +407,7 @@ class Component extends DCLogic {
         this.setState({ draftPhotos: this.state.draftPhotos.concat(added).slice(0, 12) });
       },
       saving: !!this.state.saving,
-      saveLabel: this.state.saving ? 'Guardando…' : 'Guardar visita',
+      saveLabel: this.state.saving ? (this.state.uploadTotal ? 'Subiendo ' + Math.min(this.state.uploadDone + 1, this.state.uploadTotal) + '/' + this.state.uploadTotal + '…' : 'Guardando…') : this.state.draftVisitId ? 'Reintentar' : 'Guardar visita',
       hasFormError: !!this.state.formError,
       formError: this.state.formError || '',
       saveVisit: (e) => {
@@ -357,7 +426,23 @@ class Component extends DCLogic {
       // foto del diario a pantalla completa
       photoOpen: !!this.state.photo,
       photoUrl: this.state.photo,
-      closePhoto: () => this.setState({ photo: null }),
+      closePhoto: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (Date.now() - (this.swipeAt || 0) < 400) return; // al deslizar no se cierra
+        this.setState({ photo: null });
+      },
+      photoMany: photoList.length > 1,
+      photoCounter: photoList.length > 1 ? (this.state.photoIdx + 1) + ' de ' + photoList.length : 'Foto de la visita',
+      prevPhoto: (e) => { if (e) e.stopPropagation(); this.stepPhoto(-1); },
+      nextPhoto: (e) => { if (e) e.stopPropagation(); this.stepPhoto(1); },
+      photoTouchStart: (e) => { const t = e.touches && e.touches[0]; if (t) { this.tx = t.clientX; this.ty = t.clientY; } },
+      photoTouchEnd: (e) => {
+        const t = e.changedTouches && e.changedTouches[0];
+        if (!t || this.tx == null) return;
+        const dx = t.clientX - this.tx, dy = t.clientY - this.ty;
+        this.tx = null;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) { this.swipeAt = Date.now(); this.stepPhoto(dx < 0 ? 1 : -1); }
+      },
       hype: String(this.state.hype),
       addHype: () => {
         this.setState({ hype: this.state.hype + 1 });
