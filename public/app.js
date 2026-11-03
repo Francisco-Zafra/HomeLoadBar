@@ -696,7 +696,7 @@ class Component extends DCLogic {
               f.target.eaten = true; f.target = null; f.happy = T + 5;
               f.fedLevel = Math.min(1.2, f.food + 0.35); f.fedAt = simClock; f.food = f.fedLevel;
               this.savePond(fishes); // TODO BD: POST feed_event { fish_id, at }
-              if (f.adult) f.s = Math.min(22, f.s + 0.3);
+              if (f.adult) f.s = f.adultS = Math.min(22, f.adultS + 0.3);
               for (let q = 0; q < 6; q++) sparks.push({ x: f.x * W, y: fy, vx: rnd(-70, 70), vy: rnd(-140, -40), life: 0.7, s: rnd(3, 6) });
               ripples.push({ x: f.x * W, t: T, A: 2 });
               this.sfx('chomp');
