@@ -12,7 +12,7 @@ async function api(route, body) {
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { now: Date.now(), hype: 109, intro: 0, diary: false, scene: false, visits: [], form: false, draftDate: '', draftNote: '', draftPhotos: [], draftPin: '', saving: false, formError: '', draftVisitId: null, uploadDone: 0, uploadTotal: 0, photo: null, photoList: [], photoIdx: 0 };
+    this.state = { now: Date.now(), hype: 109, intro: 0, diary: false, scene: false, visits: [], form: false, draftDate: '', draftNote: '', draftPhotos: [], draftPin: '', saving: false, formError: '', draftVisitId: null, uploadDone: 0, uploadTotal: 0, photo: null, photoList: [], photoIdx: 0, msOpen: -1 };
     this.setCanvas = (el) => { if (el) this.canvas = el; };
     this.setPvImg = (el) => { this.pvImg = el; };
     this.zoom = { s: 1, x: 0, y: 0 };
@@ -200,23 +200,11 @@ class Component extends DCLogic {
       c2.bezierCurveTo(x - s * 0.9, y - s * 0.25, x - s * 0.45, y - s * 0.95, x, y - s * 0.45);
       c2.bezierCurveTo(x + s * 0.45, y - s * 0.95, x + s * 0.9, y - s * 0.25, x, y + s * 0.35);
     };
-    // inclinación del móvil: el agua se mantiene horizontal respecto al suelo real
-    let tiltTarget = 0, tilt = 0;
-    this.onTilt = (e) => { if (e.gamma == null) return; tiltTarget = Math.max(-25, Math.min(25, e.gamma)) * Math.PI / 180; };
-    window.addEventListener('deviceorientation', this.onTilt);
-    this.askTilt = () => {
-      const D = window.DeviceOrientationEvent;
-      if (D && typeof D.requestPermission === 'function') D.requestPermission().catch(() => {});
-      window.removeEventListener('pointerdown', this.askTilt);
-    };
-    window.addEventListener('pointerdown', this.askTilt);
-
     let last = performance.now(), T = 0;
     const frame = (now) => {
       const dt = Math.min(50, now - last); last = now;
       const dts = dt / 1000;
       if (!reduce) T += dts;
-      tilt += (tiltTarget - tilt) * Math.min(1, dts * 3);
       const hex = (this.props.accent ?? '#3BE58A').replace('#', '');
       const R = parseInt(hex.slice(0, 2), 16), G = parseInt(hex.slice(2, 4), 16), B = parseInt(hex.slice(4, 6), 16);
       const c = (a) => 'rgba(' + R + ',' + G + ',' + B + ',' + a + ')';
@@ -229,13 +217,12 @@ class Component extends DCLogic {
       }
       if (p > 0.002 && W > 0) {
         const level = H * (1 - p);
-        const tiltY = (x) => -Math.tan(tilt) * (x - W / 2);
         const amp = Math.min(1, (H - level) / 60);
-        const surfAt = (x) => level + surf(x, T, amp) + tiltY(x);
+        const surfAt = (x) => level + surf(x, T, amp);
         const step = 6;
         // olas lejanas
         ctx.beginPath(); ctx.moveTo(0, H);
-        for (let x = 0; x <= W + step; x += step) ctx.lineTo(x, level - 8 + surf(x * 1.35 + 400, T * 0.7, 0.7 * amp) + tiltY(x));
+        for (let x = 0; x <= W + step; x += step) ctx.lineTo(x, level - 8 + surf(x * 1.35 + 400, T * 0.7, 0.7 * amp));
         ctx.lineTo(W, H); ctx.closePath();
         ctx.fillStyle = c(0.06); ctx.fill();
         // cuerpo del agua
@@ -328,6 +315,11 @@ class Component extends DCLogic {
       .catch(() => { this.server = null; });
     this.hypeT = setInterval(() => this.sendHype(), 1200);
     this.onHide = () => this.sendHype();
+    // el bocadillo de un hito se cierra al tocar fuera o con Escape
+    this.onDocClick = () => { if (this.state.msOpen >= 0) this.setState({ msOpen: -1 }); };
+    this.onKey = (e) => { if (e.key === 'Escape' && this.state.msOpen >= 0) this.setState({ msOpen: -1 }); };
+    document.addEventListener('click', this.onDocClick);
+    document.addEventListener('keydown', this.onKey);
     window.addEventListener('pagehide', this.onHide);
   }
   componentWillUnmount() {
@@ -335,9 +327,9 @@ class Component extends DCLogic {
     clearTimeout(this.waterRetry);
     cancelAnimationFrame(this.raf); cancelAnimationFrame(this.wraf);
     if (this.onResize) window.removeEventListener('resize', this.onResize);
-    if (this.onTilt) window.removeEventListener('deviceorientation', this.onTilt);
-    if (this.askTilt) window.removeEventListener('pointerdown', this.askTilt);
     if (this.onHide) window.removeEventListener('pagehide', this.onHide);
+    if (this.onDocClick) document.removeEventListener('click', this.onDocClick);
+    if (this.onKey) document.removeEventListener('keydown', this.onKey);
   }
 
   renderVals() {
@@ -355,13 +347,13 @@ class Component extends DCLogic {
     const [pctInt, pctDec] = (pa * 100).toFixed(2).split('.');
 
     const raw = [
-      { name: 'Reserva', date: '2025-11-13', icon: 'clip' },
-      { name: 'Firma', date: '2026-04-16', icon: 'doc' },
-      { name: 'Pago 1', date: '2026-08-01', icon: 'pay' },
-      { name: 'Pago 2', date: '2026-12-01', icon: 'pay' },
-      { name: 'Pago 3', date: '2027-04-01', icon: 'pay' },
-      { name: 'Pago 4', date: '2027-08-01', icon: 'pay' },
-      { name: 'Llaves', date: '2028-10-01', icon: 'key' }
+      { name: 'Reserva', full: 'Reserva del piso', date: '2025-11-13', icon: 'clip' },
+      { name: 'Firma', full: 'Firma del contrato', date: '2026-04-16', icon: 'doc' },
+      { name: 'Pago 1', full: 'Pago 1 de 4', date: '2026-08-01', icon: 'pay' },
+      { name: 'Pago 2', full: 'Pago 2 de 4', date: '2026-12-01', icon: 'pay' },
+      { name: 'Pago 3', full: 'Pago 3 de 4', date: '2027-04-01', icon: 'pay' },
+      { name: 'Pago 4', full: 'Pago 4 de 4', date: '2027-08-01', icon: 'pay' },
+      { name: 'Llaves', full: 'Entrega de llaves', date: '2028-10-01', icon: 'key' }
     ];
     const nextIdx = raw.findIndex((m) => new Date(m.date + 'T00:00:00').getTime() > now);
     const milestones = raw.map((m, i) => {
@@ -373,9 +365,26 @@ class Component extends DCLogic {
       if (done) node += ' background: ' + accent + '; box-shadow: 0 0 10px ' + tint(0.7) + ';';
       else if (next) node += ' background: #08110E; border: 3px solid #FFD27A; animation: pulseRing 1.8s ease-out infinite;';
       else node += ' background: #08110E; border: 2px solid rgba(232,242,236,.3);';
+      // bocadillo con el nombre completo y la fecha (se abre al tocar el hito)
+      const open = this.state.msOpen === i;
+      const cx = i === 0 ? size / 2 : i === raw.length - 1 ? -size / 2 : 0; // centro del punto respecto al ancla
+      const BW = 184;
+      const bx = f < 0.25 ? cx - 22 : f > 0.75 ? cx - BW + 22 : -BW / 2; // cerca de los bordes, el bocadillo se desplaza hacia dentro
+      const days = Math.round((t - now) / 86400000);
+      const fecha = new Date(t).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       return {
         ...m,
-        nodeWrap: 'position: absolute; top: 0; left: ' + (f * 100).toFixed(2) + '%; width: 0; display: flex; flex-direction: column; align-items: ' + (i === 0 ? 'flex-start' : i === raw.length - 1 ? 'flex-end' : 'center') + '; gap: 6px; animation: fadeUp .6s ease-out both; animation-delay: ' + (300 + i * 110) + 'ms;',
+        nodeWrap: 'position: absolute; top: 0; left: ' + (f * 100).toFixed(2) + '%; width: 0; display: flex; flex-direction: column; align-items: ' + (i === 0 ? 'flex-start' : i === raw.length - 1 ? 'flex-end' : 'center') + '; gap: 6px; animation: fadeUp .6s ease-out both; animation-delay: ' + (300 + i * 110) + 'ms;' + (open ? ' z-index: 5;' : ''),
+        hitStyle: 'left: ' + (cx - 22) + 'px;',
+        open,
+        toggle: (e) => { e.stopPropagation(); this.setState({ msOpen: open ? -1 : i }); },
+        ariaLabel: m.full + ', ' + fecha,
+        bubbleStyle: 'left: ' + bx + 'px; width: ' + BW + 'px; border-color: ' + (done ? tint(0.55) : next ? 'rgba(255,210,122,.6)' : 'rgba(232,242,236,.22)') + ';',
+        arrowStyle: 'left: ' + (cx - bx - 6) + 'px; border-color: ' + (done ? tint(0.55) : next ? 'rgba(255,210,122,.6)' : 'rgba(232,242,236,.22)') + ';',
+        fullName: m.full,
+        fecha: fecha.charAt(0).toUpperCase() + fecha.slice(1),
+        estado: done ? (days === 0 ? 'Hoy' : 'Hecho · hace ' + -days + (days === -1 ? ' día' : ' días')) : 'Faltan ' + days + (days === 1 ? ' día' : ' días'),
+        estadoColor: done ? accent : next ? '#FFD27A' : '#8FA89B',
         node,
         isClip: m.icon === 'clip', isDoc: m.icon === 'doc', isPay: m.icon === 'pay', isKey: m.icon === 'key',
         iconColor: done ? accent : next ? '#FFD27A' : '#6F8C80',
